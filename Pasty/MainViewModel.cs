@@ -28,15 +28,16 @@ public class MainViewModel
 
     public async Task AddOrUpdateAsync(ClipItem item)
     {
-        var existing = All.FirstOrDefault(i =>
-            i.Type == item.Type &&
-            (item.Type == ClipType.Text
-                ? i.Text == item.Text
-                : item.ImagePath != null && File.Exists(item.ImagePath) && File.Exists(i.ImagePath) &&
-                  new FileInfo(i.ImagePath).Length == new FileInfo(item.ImagePath).Length));
+        var existing = All.FirstOrDefault(i => IsSameContent(i, item));
 
         if (existing != null)
         {
+            // 去重命中：ClipboardMonitor 已经把这次的 PNG 写进了 images 目录，
+            // 而它马上就不再被任何条目引用。不在这里删掉就是一个永久孤儿文件——
+            // 连续复制同一张图会一次一份地堆在磁盘上。
+            if (item.Type == ClipType.Image && !ReferenceEquals(existing, item))
+                StorageService.DeleteImage(item.ImagePath);
+
             // 相同内容：上移并刷新时间
             All.Remove(existing);
             existing.LastUsedAt = DateTime.Now;
@@ -61,6 +62,26 @@ public class MainViewModel
         RebuildGroups();
         StorageService.Save();
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 两个条目内容是否相同。图片先比文件长度（廉价），只有长度相同才真正比内容哈希：
+    /// 仅凭长度判定会把两张恰好等长的不同截图当成同一张，后来的那张被静默丢弃。
+    /// 截图尺寸相同时 PNG 长度撞车并不罕见，所以这一步不能省。
+    /// </summary>
+    private static bool IsSameContent(ClipItem a, ClipItem b)
+    {
+        if (a.Type != b.Type) return false;
+        if (a.Type == ClipType.Text) return a.Text == b.Text;
+
+        if (a.ImagePath == null || b.ImagePath == null) return false;
+        var fa = new FileInfo(a.ImagePath);
+        var fb = new FileInfo(b.ImagePath);
+        if (!fa.Exists || !fb.Exists || fa.Length != fb.Length) return false;
+
+        var ha = a.ImageHash ??= StorageService.HashFile(a.ImagePath);
+        var hb = b.ImageHash ??= StorageService.HashFile(b.ImagePath);
+        return ha != null && ha == hb;
     }
 
     public void RemoveItems(IEnumerable<ClipItem> items)

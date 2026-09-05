@@ -123,6 +123,11 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern bool GetCursorPos(out POINT lpPoint);
 
+    /// <summary>窗口所在显示器的 DPI（96 = 100%）。AppWindow 的坐标与尺寸都是物理像素，
+    /// 逻辑尺寸必须按此换算，否则在高 DPI 屏上窗口会小得没法用。</summary>
+    [DllImport("user32.dll")]
+    public static extern uint GetDpiForWindow(IntPtr hWnd);
+
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X; public int Y; }
 

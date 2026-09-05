@@ -31,20 +31,28 @@ public sealed partial class MainWindow : Window
 {
     public static new MainWindow? Current { get; private set; }
 
+    // 逻辑像素；AppWindow 收的是物理像素，用时按 DPI 换算
+    private const int PanelWidth = 440;
+    private const int PanelHeight = 520;
+    private const int WindowWidth = 1060;
+    private const int WindowHeight = 680;
+
     private bool _panelMode;
     private bool _suppressSelection;
     private readonly ObservableCollection<object> _rows = new();
     private ClipItem? _selectedItem;
+    private readonly IntPtr _hwnd;
 
     public MainWindow()
     {
         InitializeComponent();
         Current = this;
+        _hwnd = WindowNative.GetWindowHandle(this);
 
         Title = "Pasty";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
-        AppWindow.Resize(new SizeInt32(1060, 680));
+        AppWindow.Resize(Scaled(WindowWidth, WindowHeight));
 
         _rows.CollectionChanged += (s, e) => { };
         ItemsList.ItemsSource = _rows;
@@ -86,19 +94,40 @@ public sealed partial class MainWindow : Window
 
     // ---------- 显示形态 ----------
 
+    /// <summary>把逻辑尺寸换算成当前显示器的物理像素。</summary>
+    private SizeInt32 Scaled(int width, int height)
+    {
+        var scale = Win32.GetDpiForWindow(_hwnd) / 96.0;
+        if (scale <= 0) scale = 1;
+        return new SizeInt32((int)Math.Round(width * scale), (int)Math.Round(height * scale));
+    }
+
+    /// <summary>
+    /// 把 desired 夹到 [origin, origin + extent - size] 内。
+    /// 直接用 Math.Clamp 在窗口比工作区还大时会因 min &gt; max 抛 ArgumentException，
+    /// 而这条路径由热键触发、异常被 App 的兜底处理器吞掉，表现就是面板压根不出现。
+    /// </summary>
+    private static int FitInto(int desired, int origin, int extent, int size)
+        => extent <= size ? origin : Math.Clamp(desired, origin, origin + extent - size);
+
     public void ShowAsPanel()
     {
         _panelMode = true;
         Win32.GetCursorPos(out var p);
         var area = DisplayArea.GetFromPoint(new PointInt32(p.X, p.Y), DisplayAreaFallback.Nearest);
-        var width = 440;
-        var x = Math.Clamp(p.X - width / 2, area.WorkArea.X, area.WorkArea.X + area.WorkArea.Width - width);
-        var y = Math.Clamp(p.Y + 12, area.WorkArea.Y, area.WorkArea.Y + area.WorkArea.Height - 520);
+
+        // 必须真的缩到面板尺寸再定位。原先只算了 440×520 的坐标却没有 Resize，
+        // 窗口仍是 1060×680，于是按面板宽度居中的结果是整个窗口大幅偏出光标右侧。
+        var size = Scaled(PanelWidth, PanelHeight);
+        AppWindow.Resize(size);
+
+        var x = FitInto(p.X - size.Width / 2, area.WorkArea.X, area.WorkArea.Width, size.Width);
+        var y = FitInto(p.Y + 12, area.WorkArea.Y, area.WorkArea.Height, size.Height);
         AppWindow.Move(new PointInt32(x, y));
         AppWindow.Show(activateWindow: true);
         Activate();
         // WinUI 的 Activate() 不保证抢到前台，必须显式强制，否则面板收不到键盘输入
-        Win32.ForceForeground(WindowNative.GetWindowHandle(this));
+        Win32.ForceForeground(_hwnd);
         Activate();
         SearchBox.Focus(FocusState.Programmatic);
         SearchBox.SelectAll();
@@ -106,6 +135,8 @@ public sealed partial class MainWindow : Window
 
     public void ShowAsWindow()
     {
+        // 从面板形态切回来时必须恢复尺寸，否则托盘打开的主窗口会一直是 440 宽的面板
+        if (_panelMode) AppWindow.Resize(Scaled(WindowWidth, WindowHeight));
         _panelMode = false;
         AppWindow.Show(activateWindow: true);
         Activate();

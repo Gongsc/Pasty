@@ -20,6 +20,13 @@ public class ClipItem
     public ClipType Type { get; set; }
     public string Text { get; set; } = string.Empty;
     public string? ImagePath { get; set; }
+
+    /// <summary>
+    /// 图片内容的 SHA-256（十六进制）。首次需要比较内容时才计算并缓存下来，
+    /// 之后随索引一起持久化——images 目录里的文件写入后不再改动，缓存不会失效。
+    /// </summary>
+    public string? ImageHash { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime LastUsedAt { get; set; } = DateTime.Now;
     public bool IsPinned { get; set; }

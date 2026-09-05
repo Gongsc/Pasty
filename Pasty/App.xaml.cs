@@ -93,6 +93,10 @@ public partial class App : Application
     {
         Hotkeys.Dispose();
         TrayIconService.Remove();
+        // 落盘必须在 Current.Exit() 之前且是同步的：Save() 走后台队列，
+        // 进程一结束队列里的写入就没了，退出前的复制/置顶/编辑会全部丢失
+        StorageService.Flush();
+        Trace.Flush();
         Current.Exit();
     }
 
