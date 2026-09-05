@@ -15,11 +15,6 @@ using WinRT.Interop;
 
 namespace Pasty.Views;
 
-public class HeaderRow
-{
-    public string Title { get; set; } = string.Empty;
-}
-
 public class RowTemplateSelector : DataTemplateSelector
 {
     public DataTemplate? HeaderTemplate { get; set; }
@@ -141,8 +136,11 @@ public sealed partial class MainWindow : Window
 
     private void UpdateGroups()
     {
-        // 保留当前选中项，全量重建行集合
+        // 保留当前选中项与正在进行的编辑，全量重建行集合
         var selected = ItemsList.SelectedItem as ClipItem ?? _selectedItem;
+        var editing = _editingItem;
+        var pendingText = editing != null ? PreviewEditBox.Text : null;
+        var pendingCaret = editing != null ? PreviewEditBox.SelectionStart : 0;
 
         _rows.Clear();
         if (App.ViewModel.Pinned.Count > 0)
@@ -172,6 +170,22 @@ public sealed partial class MainWindow : Window
         else
         {
             ShowEmptyPreview();
+        }
+
+        // 上面的刷新会把预览切回只读态。若重建前正在编辑且该条目仍在列表中，
+        // 连同未保存的文本与光标位置一起恢复——否则用户打字时别处来一次复制
+        // （或置顶/删除/保留期清理触发的重建）就会静默吞掉编辑内容。
+        if (editing != null && pendingText != null && _rows.Contains(editing))
+        {
+            if (!ReferenceEquals(ItemsList.SelectedItem, editing))
+            {
+                _suppressSelection = true;
+                ItemsList.SelectedIndex = _rows.IndexOf(editing);
+                _suppressSelection = false;
+                _selectedItem = editing;
+                UpdatePreview(editing);
+            }
+            StartEdit(editing, pendingText, pendingCaret);
         }
     }
 
@@ -203,10 +217,23 @@ public sealed partial class MainWindow : Window
 
     // ---------- 预览 ----------
 
-    private void UpdatePreview(ClipItem item)
+    /// <summary>
+    /// 把预览面板从编辑态整体切回只读态。标题、两组按钮和编辑框必须一起复位：
+    /// 只清 _editingItem 和 EditHost 会留下“编辑内容 + 保存/取消”的空壳界面，
+    /// 而此时 _editingItem 已为 null，点“保存”走到 EndEdit 会直接返回，按钮形同失效。
+    /// </summary>
+    private void ExitEditMode()
     {
         _editingItem = null;
         EditHost.Visibility = Visibility.Collapsed;
+        PreviewTitle.Text = "全文预览";
+        PreviewActions.Visibility = Visibility.Visible;
+        EditActions.Visibility = Visibility.Collapsed;
+    }
+
+    private void UpdatePreview(ClipItem item)
+    {
+        ExitEditMode();
         EmptyHint.Visibility = Visibility.Collapsed;
         PreviewMeta.Text = item.MetaText;
         if (item.Type == ClipType.Text)
@@ -229,10 +256,9 @@ public sealed partial class MainWindow : Window
 
     private void ShowEmptyPreview()
     {
-        _editingItem = null;
+        ExitEditMode();
         TextPreviewHost.Visibility = Visibility.Collapsed;
         ImagePreviewHost.Visibility = Visibility.Collapsed;
-        EditHost.Visibility = Visibility.Collapsed;
         EmptyHint.Visibility = Visibility.Visible;
         PreviewMeta.Text = string.Empty;
     }
@@ -240,9 +266,7 @@ public sealed partial class MainWindow : Window
     private async void CopyPreview_Click(object sender, RoutedEventArgs e)
     {
         if (ItemsList.SelectedItem is not ClipItem item) return;
-        ClipboardMonitor.Suspended = true;
-        try { await PasteService.WriteToClipboardAsync(item); }
-        finally { ClipboardMonitor.Suspended = false; }
+        await PasteService.WriteToClipboardAsync(item); // 内部已登记自身写入，通知会被过滤
         App.ViewModel.Touch(item);
     }
 
@@ -254,12 +278,14 @@ public sealed partial class MainWindow : Window
 
     private async Task PasteItemAsync(ClipItem item)
     {
-        var target = HotkeyService.LastForegroundWindow != IntPtr.Zero
-            ? HotkeyService.LastForegroundWindow
-            : Win32.GetForegroundWindow();
+        // 取用即清除：热键记下的句柄只对紧随其后的这一次粘贴有效。
+        // 拿不到有效句柄就退回当前前台窗口；若那也是 Pasty 自己（从托盘打开的常见情形），
+        // PasteAsync 会只写剪贴板而不发按键，而不是像以前那样整个跳过、按钮看着毫无反应。
+        var target = HotkeyService.ConsumeLastForegroundWindow();
+        if (!Win32.IsPasteTarget(target)) target = Win32.GetForegroundWindow();
+
         if (_panelMode) HidePanel();
-        if (target != WindowNative.GetWindowHandle(this))
-            await PasteService.PasteAsync(item, target);
+        await PasteService.PasteAsync(item, target);
         App.ViewModel.Touch(item);
     }
 
@@ -279,35 +305,35 @@ public sealed partial class MainWindow : Window
             StartEdit(item);
     }
 
-    private void StartEdit(ClipItem item)
+    /// <summary>进入编辑态。text/caret 用于列表重建后原样恢复未保存的编辑。</summary>
+    private void StartEdit(ClipItem item, string? text = null, int caret = -1)
     {
         _editingItem = item;
         TextPreviewHost.Visibility = Visibility.Collapsed;
         ImagePreviewHost.Visibility = Visibility.Collapsed;
         EmptyHint.Visibility = Visibility.Collapsed;
         EditHost.Visibility = Visibility.Visible;
-        PreviewEditBox.Text = item.Text;
+        PreviewEditBox.Text = text ?? item.Text;
         PreviewTitle.Text = "编辑内容";
         PreviewActions.Visibility = Visibility.Collapsed;
         EditActions.Visibility = Visibility.Visible;
         PreviewEditBox.Focus(FocusState.Programmatic);
-        PreviewEditBox.SelectionStart = PreviewEditBox.Text.Length;
+        PreviewEditBox.SelectionStart = caret >= 0
+            ? Math.Min(caret, PreviewEditBox.Text.Length)
+            : PreviewEditBox.Text.Length;
     }
 
     private void EndEdit(bool save)
     {
         if (_editingItem == null) return;
         var item = _editingItem;
+        var text = PreviewEditBox.Text;
         _editingItem = null;
 
-        if (save)
-        {
-            App.ViewModel.UpdateText(item, PreviewEditBox.Text);
-        }
+        // UpdateText 会触发列表重建；_editingItem 已清空，重建不会再把编辑态恢复回来
+        if (save) App.ViewModel.UpdateText(item, text);
 
-        PreviewTitle.Text = "全文预览";
-        PreviewActions.Visibility = Visibility.Visible;
-        EditActions.Visibility = Visibility.Collapsed;
+        // 只读态的界面复位统一由 UpdatePreview / ShowEmptyPreview 里的 ExitEditMode 负责
         if (ItemsList.SelectedItem == item)
             UpdatePreview(item);
         else

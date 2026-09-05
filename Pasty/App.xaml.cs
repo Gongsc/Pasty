@@ -104,11 +104,11 @@ public partial class App : Application
             Trace.Log("paste-first 无可粘贴条目");
             return;
         }
-        var target = useLastForeground && HotkeyService.LastForegroundWindow != IntPtr.Zero
-            ? HotkeyService.LastForegroundWindow
-            : Win32.GetForegroundWindow();
+        var target = useLastForeground ? HotkeyService.ConsumeLastForegroundWindow() : IntPtr.Zero;
+        if (!Win32.IsPasteTarget(target)) target = Win32.GetForegroundWindow();
         MainWindow.Current?.HideIfPanel();
-        Trace.Log($"paste-first 条目={item.Type} 文本前20={string.Join("", (item.Text ?? "图片").Take(20))}");
+        // 只记录类型与长度，内容本身绝不落盘：用户复制的往往就是密码和令牌
+        Trace.Log($"paste-first 条目={item.Type} 长度={(item.Type == ClipType.Text ? item.Text.Length : 0)}");
         await PasteService.PasteAsync(item, target);
         ViewModel.Touch(item);
     }

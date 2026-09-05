@@ -19,31 +19,38 @@ public static class PasteService
             return;
         }
         _busy = true;
-        Trace.Log($"paste 开始 item={item.Type} target=0x{targetHwnd.ToInt64():X} 前台=0x{Win32.GetForegroundWindow().ToInt64():X}");
+        // 目标必须是仍然存活、可见且不属于本进程的窗口。否则 ForceForeground 会静默失败，
+        // 而 SendInput 只认“当前前台窗口”，Ctrl+V 就会落到 Pasty 自己或某个无关窗口里。
+        var canSendKeys = Win32.IsPasteTarget(targetHwnd);
+        Trace.Log($"paste 开始 item={item.Type} target=0x{targetHwnd.ToInt64():X} 可发送按键={canSendKeys}");
         ClipboardMonitor.Suspended = true;
         HotkeyService.SuppressHookAction = true;
         try
         {
             await WriteToClipboardAsync(item);
             Trace.Log("paste 剪贴板已写入");
+
+            if (!canSendKeys)
+            {
+                // 例如从托盘打开主窗口后直接点“粘贴”：没有外部目标可送按键，
+                // 但内容已经进了剪贴板，用户切到目标应用自己按 Ctrl+V 即可。
+                Trace.Log("paste 无有效外部目标，仅写入剪贴板");
+                return;
+            }
+
             await Task.Delay(80);
 
-            if (targetHwnd != IntPtr.Zero)
-            {
-                if (Win32.IsIconic(targetHwnd)) Win32.ShowWindow(targetHwnd, 9 /* SW_RESTORE */);
-                // 用户刚在目标窗口按下 Ctrl+V 时它已是前台，无需切换；仅在必要时强切
-                Win32.ForceForeground(targetHwnd);
-                await Task.Delay(60);
-            }
+            if (Win32.IsIconic(targetHwnd)) Win32.ShowWindow(targetHwnd, 9 /* SW_RESTORE */);
+            // 用户刚在目标窗口按下 Ctrl+V 时它已是前台，无需切换；仅在必要时强切
+            Win32.ForceForeground(targetHwnd);
+            await Task.Delay(60);
 
             var sent = Win32.SendCtrlV();
             Trace.Log($"paste SendInput 结果={sent} (0=失败)");
             if (sent == 0)
                 Trace.Log($"paste SendInput 失败，错误码={Marshal.GetLastWin32Error()}");
             Trace.Log($"paste 已发送 Ctrl+V 到 0x{Win32.GetForegroundWindow().ToInt64():X}");
-            item.LastUsedAt = DateTime.Now;
-            item.UseCount++;
-            StorageService.Save();
+            // 使用次数与排序由调用方的 ViewModel.Touch 统一负责，这里不再重复计数
         }
         catch (Exception ex)
         {
@@ -74,6 +81,11 @@ public static class PasteService
             // 图片用 Win32 写标准 CF_DIB + PNG 格式，兼容所有应用的 Ctrl+V
             await WriteImageClipboardAsync(item.ImagePath);
         }
+        else
+        {
+            return; // 什么都没写，不能推进序号，否则会连带吞掉别人的下一次复制
+        }
+        ClipboardMonitor.MarkSelfWrite();
     }
 
     private static async Task FlushWithRetryAsync()

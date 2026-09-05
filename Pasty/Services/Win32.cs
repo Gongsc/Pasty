@@ -74,6 +74,27 @@ internal static class Win32
     public static extern IntPtr GetForegroundWindow();
 
     [DllImport("user32.dll")]
+    public static extern bool IsWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool IsWindowVisible(IntPtr hWnd);
+
+    [DllImport("kernel32.dll")]
+    public static extern uint GetCurrentProcessId();
+
+    /// <summary>
+    /// 该窗口能否作为粘贴目标：句柄仍然有效、可见，且不属于本进程。
+    /// 缓存下来的前台句柄可能已被销毁并回收给别的进程，此时强切前台后
+    /// SendInput 会把剪贴板内容送进一个无关窗口，必须先校验。
+    /// </summary>
+    public static bool IsPasteTarget(IntPtr hWnd)
+    {
+        if (hWnd == IntPtr.Zero || !IsWindow(hWnd) || !IsWindowVisible(hWnd)) return false;
+        GetWindowThreadProcessId(hWnd, out var pid);
+        return pid != 0 && pid != GetCurrentProcessId();
+    }
+
+    [DllImport("user32.dll")]
     public static extern bool IsIconic(IntPtr hWnd);
 
     [DllImport("user32.dll")]
@@ -190,6 +211,10 @@ internal static class Win32
 
     [DllImport("user32.dll")]
     public static extern bool CloseClipboard();
+
+    /// <summary>剪贴板内容每变化一次该序号 +1，用于识别“这次变化是我们自己造成的”。</summary>
+    [DllImport("user32.dll")]
+    public static extern uint GetClipboardSequenceNumber();
 
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern IntPtr GlobalAlloc(uint uFlags, UIntPtr dwBytes);

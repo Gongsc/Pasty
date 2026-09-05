@@ -24,7 +24,17 @@ public sealed class HotkeyService : IDisposable
     public static readonly bool HookTestMode = File.Exists(Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Pasty", "hooktest"));
 
-    public static IntPtr LastForegroundWindow { get; private set; }
+    /// <summary>触发热键（或 Ctrl+V 拦截）时的前台窗口。只经 ConsumeLastForegroundWindow 读取。</summary>
+    private static IntPtr s_lastForegroundWindow;
+
+    /// <summary>
+    /// 取出并清除缓存的前台句柄。该值只对紧随触发之后的那一次粘贴有效：
+    /// 留着不清会让几小时前按热键时记下的窗口继续被当成粘贴目标，
+    /// 而那个句柄可能早已销毁并被回收给别的进程。
+    /// 因此不提供只读属性——一次非消费式读取就是这个 bug 本身。
+    /// </summary>
+    public static IntPtr ConsumeLastForegroundWindow()
+        => Interlocked.Exchange(ref s_lastForegroundWindow, IntPtr.Zero);
 
     public event Action? ShowPanelRequested;
     public event Action? PasteTopRequested;
@@ -54,13 +64,13 @@ public sealed class HotkeyService : IDisposable
         var id = wParam.ToInt32();
         if (id == IdShowPanel)
         {
-            LastForegroundWindow = Win32.GetForegroundWindow();
+            s_lastForegroundWindow = Win32.GetForegroundWindow();
             _dispatcher.TryEnqueue(() => ShowPanelRequested?.Invoke());
             return true;
         }
         if (id == IdPasteTop)
         {
-            LastForegroundWindow = Win32.GetForegroundWindow();
+            s_lastForegroundWindow = Win32.GetForegroundWindow();
             _dispatcher.TryEnqueue(() => PasteTopRequested?.Invoke());
             return true;
         }
@@ -74,43 +84,43 @@ public sealed class HotkeyService : IDisposable
 
     private IntPtr LowLevelHook(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0 && !SuppressHookAction && OverrideCtrlV)
-        {
-            var msg = (uint)wParam;
-            var kb = Marshal.PtrToStructure<Win32.KBDLLHOOKSTRUCT>(lParam);
+        if (nCode < 0) return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
 
-            // 跟踪 V 键物理状态：只在 Ctrl+V 首次按下时触发一次，忽略按住时的自动重复
-            // HookTestMode：注入的按键也按物理键处理（仅用于诊断，由 flag 文件开启）
-            var injected = (kb.flags & Win32.LLKHF_INJECTED) != 0 && !HookTestMode;
-            if (kb.vkCode == Win32.VK_V && !injected)
-            {
-                if (msg == Win32.WM_KEYDOWN || msg == Win32.WM_SYSKEYDOWN)
-                {
-                    if ((Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) == 0 || IsModifierDown())
-                        return Win32.CallNextHookEx(_hook, nCode, wParam, lParam); // 普通 v 键或 Shift/Alt+V：放行
-                    if (_vKeyDown)
-                    {
-                        Trace.Log("hook V-down 重复，吞掉");
-                        return new IntPtr(1); // 自动重复：吞掉但不触发
-                    }
-                    _vKeyDown = true;
-                    LastForegroundWindow = Win32.GetForegroundWindow();
-                    Trace.Log($"hook 拦截 Ctrl+V，前台=0x{LastForegroundWindow.ToInt64():X}，焦点={Win32.GetFocusInfo()}，入队");
-                    var queued = _dispatcher.TryEnqueue(() => PasteTopRequested?.Invoke());
-                    Trace.Log($"hook 入队结果={queued}");
-                    return new IntPtr(1); // 吞掉系统 Ctrl+V
-                }
-                if (msg == Win32.WM_KEYUP || msg == Win32.WM_SYSKEYUP)
-                {
-                    var wasDown = _vKeyDown;
-                    _vKeyDown = false;
-                    return wasDown && (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0
-                        ? new IntPtr(1)
-                        : Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
-                }
-            }
+        var msg = (uint)wParam;
+        var kb = Marshal.PtrToStructure<Win32.KBDLLHOOKSTRUCT>(lParam);
+
+        // HookTestMode：注入的按键也按物理键处理（仅用于诊断，由 flag 文件开启）
+        var injected = (kb.flags & Win32.LLKHF_INJECTED) != 0 && !HookTestMode;
+        if (kb.vkCode != Win32.VK_V || injected)
+            return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
+
+        // 抬键：物理状态必须无条件复位，不能放在 SuppressHookAction 门控内。
+        // 粘贴流程在按下后的一个消息泵回合内就置起 SuppressHookAction，并保持约 340ms；
+        // 真人松手只需约 100ms，若抬键被门控跳过，_vKeyDown 会永久停留在 true，
+        // 下一次 Ctrl+V 撞上自动重复判定被吞掉——表现为每隔一次 Ctrl+V 完全失效。
+        if (msg == Win32.WM_KEYUP || msg == Win32.WM_SYSKEYUP)
+        {
+            var wasSwallowed = _vKeyDown;
+            _vKeyDown = false;
+            return wasSwallowed && (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0
+                ? new IntPtr(1) // 按下已被吞掉，抬键一并吞掉，避免目标应用收到半截按键
+                : Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
         }
-        return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
+
+        if (msg != Win32.WM_KEYDOWN && msg != Win32.WM_SYSKEYDOWN)
+            return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
+        if (SuppressHookAction || !OverrideCtrlV)
+            return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
+        if ((Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) == 0 || IsModifierDown())
+            return Win32.CallNextHookEx(_hook, nCode, wParam, lParam); // 普通 v 键或 Shift/Alt+V：放行
+
+        // 只在 Ctrl+V 首次按下时触发一次，忽略按住时的自动重复
+        if (_vKeyDown) return new IntPtr(1);
+
+        _vKeyDown = true;
+        s_lastForegroundWindow = Win32.GetForegroundWindow();
+        _dispatcher.TryEnqueue(() => PasteTopRequested?.Invoke());
+        return new IntPtr(1); // 吞掉系统 Ctrl+V
     }
 
     private static bool IsModifierDown()
