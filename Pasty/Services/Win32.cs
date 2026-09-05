@@ -282,6 +282,27 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr LoadIconW(IntPtr hInstance, IntPtr lpIconName);
 
+    /// <summary>
+    /// 从 .ico 文件加载指定像素尺寸的图标（hInstance 传 IntPtr.Zero + LR_LOADFROMFILE）。
+    /// 用它而不是 LoadIconW：LoadIconW 只会取 SM_CXICON（通常 32）那一档再缩放，
+    /// 而托盘要的是 SM_CXSMICON（100% DPI 下 16）——缩放出来的 16px 是一团糊。
+    /// 返回的句柄归调用方所有，用完必须 DestroyIcon。
+    /// </summary>
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr LoadImageW(IntPtr hInst, string name, uint type, int cx, int cy, uint fuLoad);
+
+    public const uint IMAGE_ICON = 1;
+    public const uint LR_LOADFROMFILE = 0x00000010;
+
+    [DllImport("user32.dll")]
+    public static extern int GetSystemMetrics(int nIndex);
+
+    /// <summary>托盘图标的目标尺寸：随 DPI 变化，100% = 16，125% = 20，150% = 24，200% = 32。</summary>
+    public const int SM_CXSMICON = 49, SM_CYSMICON = 50;
+
+    /// <summary>lParam 为 "ImmersiveColorSet" 时表示系统主题（含任务栏明暗）变了。</summary>
+    public const uint WM_SETTINGCHANGE = 0x001A;
+
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     public static extern IntPtr CreateEventW(IntPtr lpEventAttributes, bool bManualReset, bool bInitialState, string? lpName);
 

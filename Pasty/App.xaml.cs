@@ -14,6 +14,13 @@ public partial class App : Application
     public static HotkeyService Hotkeys { get; private set; } = null!;
     public static MainViewModel ViewModel { get; private set; } = null!;
 
+    /// <summary>
+    /// 窗口图标（标题栏左上角、Alt+Tab、任务栏）。unpackaged 应用没有包清单提供图标，
+    /// 每个窗口都得自己 AppWindow.SetIcon，否则显示的是那个通用的空白窗口图标。
+    /// </summary>
+    public static string IconPath { get; } =
+        System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Pasty.ico");
+
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
     private RetentionService _retention = null!;

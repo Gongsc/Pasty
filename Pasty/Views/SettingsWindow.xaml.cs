@@ -31,6 +31,7 @@ public sealed partial class SettingsWindow : Window
         InitializeComponent();
         Title = "Pasty — 设置";
         ExtendsContentIntoTitleBar = true;
+        AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(new Windows.Graphics.SizeInt32(640, 780));
 

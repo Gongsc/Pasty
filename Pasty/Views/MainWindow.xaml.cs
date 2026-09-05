@@ -51,6 +51,7 @@ public sealed partial class MainWindow : Window
 
         Title = "Pasty";
         ExtendsContentIntoTitleBar = true;
+        AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(Scaled(WindowWidth, WindowHeight));
 

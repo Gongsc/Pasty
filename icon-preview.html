@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pasty 拟物图标</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F4F7FA; --surface:#FFFFFF; --sunk:#E9EEF4;
+  --line:#D5DDE7; --line-soft:#E4EAF1;
+  --ink:#101720; --ink-2:#465262; --muted:#6E7A88;
+  --accent:#0067C0; --accent-soft:#E4EEF9;
+  --win-light:#F3F3F3; --win-dark:#202020;
+  --win-glyph-light:#1B1B1B; --win-glyph-dark:#F2F2F2;
+  --tray-light:#0067C0; --tray-dark:#4CB2F5;
+  --sans:'Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif;
+  --disp:'Archivo','Noto Sans SC','Microsoft YaHei',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1319; --surface:#161C24; --sunk:#1D2530;
+    --line:#28323E; --line-soft:#222B36;
+    --ink:#E9EEF4; --ink-2:#B3BEC9; --muted:#8A97A5;
+    --accent:#4CA9F0; --accent-soft:#152130;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1319; --surface:#161C24; --sunk:#1D2530;
+  --line:#28323E; --line-soft:#222B36;
+  --ink:#E9EEF4; --ink-2:#B3BEC9; --muted:#8A97A5;
+  --accent:#4CA9F0; --accent-soft:#152130;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 28px 72px}
+.eyebrow{font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--disp);font-weight:700;font-size:34px;line-height:1.15;margin:10px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.lede{max-width:62ch;color:var(--ink-2);margin:14px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{font-family:var(--mono);font-size:11.5px;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2);background:var(--surface)}
+.chip b{color:var(--accent);font-weight:500}
+.rule{height:1px;background:var(--line);border:0;margin:34px 0 0}
+h2{font-family:var(--disp);font-weight:700;font-size:13px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin:40px 0 16px}
+.sub{font-size:13px;color:var(--muted);margin:-8px 0 16px;max-width:66ch}
+.plate{display:inline-flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid var(--line)}
+.plate-l{background:#FBFBFB}
+.plate-d{background:#2B2B2B;border-color:#3A3A3A}
+.heroes{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.hero-big{width:300px;height:300px}
+.hero-mid{width:152px;height:152px}
+.hero-col{display:flex;flex-direction:column;gap:14px}
+
+.lods{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.lod{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.lod-art{display:flex;align-items:center;justify-content:center;height:168px;background:#FBFBFB;border-bottom:1px solid var(--line)}
+.lod-b{padding:12px 14px 14px}
+.lod-tag{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.06em}
+.lod-b h4{font-family:var(--disp);font-size:14px;font-weight:700;margin:3px 0 6px}
+.lod-b p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+.lod-sizes{margin-top:9px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+.strip{display:flex;align-items:flex-end;gap:14px;padding:14px 16px;border-radius:10px;border:1px solid var(--line);flex-wrap:wrap}
+.strip-l{background:#FBFBFB}
+.strip-d{background:#2B2B2B;border-color:#3A3A3A}
+.strip-wl{background:var(--win-light)}
+.strip-wd{background:var(--win-dark);border-color:#3A3A3A}
+.si{display:flex;flex-direction:column;align-items:center;gap:7px}
+.si svg{display:block}
+.si b{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);line-height:1.3;text-align:center}
+.strip-d .si b,.strip-wd .si b{color:#8E9AA6}
+.si b em{display:block;font-style:normal;font-size:9px;opacity:.85;color:var(--accent)}
+.stack2{display:flex;flex-direction:column;gap:10px}
+</style>
+<style>
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.step-art{display:flex;align-items:center;justify-content:center;height:132px;background:#FBFBFB;border-bottom:1px solid var(--line)}
+.step-b{padding:10px 12px 12px}
+.step-n{font-family:var(--mono);font-size:10.5px;color:var(--accent)}
+.step-b div.t{font-family:var(--disp);font-size:12.5px;font-weight:700;margin-top:2px}
+.step-b div.d{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar{display:flex;align-items:center;justify-content:flex-end;gap:15px;height:48px;padding:0 14px;border-radius:8px;border:1px solid var(--line)}
+.bar-l{background:var(--win-light);color:var(--win-glyph-light)}
+.bar-d{background:var(--win-dark);color:var(--win-glyph-dark);border-color:#3A3A3A}
+.bar-tag{margin-right:auto;font-family:var(--mono);font-size:11px;opacity:.55}
+.sys{display:flex;align-items:center;gap:11px;opacity:.9}
+.clock{font-size:11.5px;line-height:1.25;text-align:right}
+.note{font-size:12.5px;color:var(--muted);margin:12px 0 0;max-width:70ch}
+.pxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pxcol h4{font-family:var(--disp);font-size:12.5px;font-weight:700;margin:0 0 4px}
+.pxcol .pxsub{font-size:11.5px;color:var(--muted);margin:0 0 10px}
+.pxpair{display:flex;gap:8px}
+canvas.px{border-radius:6px;border:1px solid var(--line);display:block;width:144px;height:144px;background:var(--sunk)}
+.pxfoot{font-size:11.5px;color:var(--muted);margin-top:8px;font-family:var(--mono)}
+
+.tbs{display:flex;flex-direction:column;gap:10px;max-width:520px}
+.tb{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.tb-name{font-size:12px;color:var(--ink-2)}
+.tb-tag{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.old-mark{width:18px;height:18px;border-radius:4px;background:linear-gradient(135deg,#0067C0,#7A4DD6);flex:none}
+
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:11px}
+.swi{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.swc{height:48px}
+.swb{padding:8px 10px}
+.swb .h{font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+.swb .n{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.5}
+
+.deliver{border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+.row{display:grid;grid-template-columns:250px 1fr;gap:18px;padding:13px 18px;border-bottom:1px solid var(--line-soft);align-items:baseline}
+.row:last-child{border-bottom:0}
+.row .k{font-family:var(--mono);font-size:12px;color:var(--accent);word-break:break-all}
+.row .v{font-size:13px;color:var(--ink-2)}
+.row .v code{font-family:var(--mono);font-size:12px;background:var(--sunk);padding:1px 5px;border-radius:4px;color:var(--ink)}
+.warn{margin-top:14px;padding:13px 16px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:13px;color:var(--ink-2)}
+.warn b{color:var(--ink)}
+.warn+.warn{margin-top:9px}
+.foot{margin-top:40px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+@media (max-width:900px){
+  .lods,.steps,.pxgrid{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr;gap:4px}
+  .hero-big{width:240px;height:240px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+  <defs>
+    <clipPath id="cBoard"><rect x="9" y="7" width="46" height="48.5" rx="5.5"/></clipPath>
+    <clipPath id="cClamp"><rect x="23" y="4.5" width="18" height="9.5" rx="2.6"/></clipPath>
+
+    <!-- 板身：底部厚度 + 板面 + 顶部亮带 + 底部暗带（全部平涂硬边） -->
+    <g id="pBoard">
+      <rect x="9" y="7" width="46" height="51" rx="5.5" fill="#00427C"/>
+      <g clip-path="url(#cBoard)">
+        <rect x="9" y="7" width="46" height="48.5" fill="#0067C0"/>
+        <rect x="9" y="7" width="46" height="2.8" fill="#3C90DC"/>
+        <rect x="9" y="50.5" width="46" height="5" fill="#00559E"/>
+      </g>
+    </g>
+
+    <!-- 纸叠：硬边投影 + 三层纸（越下层越暗，替代渐变做出层次） -->
+    <g id="pPaper">
+      <rect x="18.5" y="15.5" width="31" height="35" rx="1.8" fill="#00559E"/>
+      <rect x="17" y="14" width="31" height="35" rx="1.8" fill="#A9BDD1"/>
+      <rect x="16" y="13" width="31" height="35" rx="1.8" fill="#CFDBE6"/>
+      <rect x="15" y="12" width="31" height="35" rx="1.8" fill="#FFFFFF"/>
+    </g>
+
+    <g id="pV">
+      <path d="M23 27.5 30.5 39 38 27.5" fill="none" stroke="#00427C" stroke-width="6"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- 金属夹：纸面投影 + 压舌 + 三段平涂钢面 + 铆钉 -->
+    <g id="pClamp">
+      <rect x="25.5" y="17.2" width="13" height="1.9" rx=".95" fill="#DCE3EA"/>
+      <rect x="25" y="11" width="14" height="6.4" rx="1.6" fill="#7E8B99"/>
+      <g clip-path="url(#cClamp)">
+        <rect x="23" y="4.5" width="18" height="9.5" fill="#9DAAB7"/>
+        <rect x="23" y="4.5" width="18" height="2.8" fill="#C6D0DA"/>
+        <rect x="23" y="11.8" width="18" height="2.2" fill="#6F7C8A"/>
+      </g>
+      <circle cx="32" cy="8.6" r="1.75" fill="#5C6874"/>
+      <circle cx="32" cy="8.6" r=".7" fill="#93A0AD"/>
+    </g>
+  </defs>
+
+  <symbol id="lod1" viewBox="0 0 64 64">
+    <use href="#pBoard"/><use href="#pPaper"/><use href="#pV"/><use href="#pClamp"/>
+  </symbol>
+  <symbol id="st1" viewBox="0 0 64 64"><use href="#pBoard"/></symbol>
+  <symbol id="st2" viewBox="0 0 64 64"><use href="#pBoard"/><use href="#pPaper"/></symbol>
+  <symbol id="st3" viewBox="0 0 64 64"><use href="#pBoard"/><use href="#pPaper"/><use href="#pClamp"/></symbol>
+  <!-- L2：32 / 24 px。丢掉亮带、纸叠、铆钉，保留厚度与压舌两级明暗 -->
+  <symbol id="lod2" viewBox="0 0 64 64">
+    <rect x="9" y="7" width="46" height="51" rx="5.5" fill="#00427C"/>
+    <rect x="9" y="7" width="46" height="48.5" rx="5.5" fill="#0067C0"/>
+    <rect x="15" y="12" width="31" height="35" rx="2" fill="#FFFFFF"/>
+    <path d="M23 27.5 30.5 39 38 27.5" fill="none" stroke="#00427C" stroke-width="6.6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="25" y="10.5" width="14" height="6.6" rx="1.6" fill="#7E8B99"/>
+    <rect x="23" y="4.5" width="18" height="9.5" rx="2.6" fill="#A8B4C0"/>
+  </symbol>
+
+  <!-- L3：20 / 16 px。三个形状，白 V 直接压在板面上（小尺寸下白纸会吃掉 V）。
+       坐标全部取 4 的倍数：64 网格缩到 16px 是 ÷4、32px 是 ÷2，边缘正好落在整像素上。 -->
+  <symbol id="lod3" viewBox="0 0 64 64">
+    <rect x="8" y="8" width="48" height="48" rx="5" fill="#0067C0"/>
+    <rect x="24" y="4" width="16" height="8" rx="2.6" fill="#8A97A5"/>
+    <path d="M22 26 32 40 42 26" fill="none" stroke="#FFFFFF" stroke-width="8"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- 托盘：单色剪影 + V 用 mask 掏成真透明，任务栏底色直接透上来 -->
+  <symbol id="tray" viewBox="0 0 64 64">
+    <mask id="kTray" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M22 26 32 40 42 26" fill="none" stroke="#000" stroke-width="8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </mask>
+    <g mask="url(#kTray)" fill="currentColor">
+      <rect x="8" y="8" width="48" height="48" rx="5"/>
+      <rect x="24" y="4" width="16" height="8" rx="2.6"/>
+    </g>
+  </symbol>
+
+  <!-- 上一版扁平 A，仅用于对比 -->
+  <symbol id="flatA" viewBox="0 0 32 32">
+    <rect x="5.5" y="5.5" width="21" height="24" rx="3.4" fill="#0067C0"/>
+    <rect x="11.5" y="2.5" width="9" height="6" rx="2" fill="#8CBBE3"/>
+    <path d="M11 14.3 16 20.9 21 14.3" fill="none" stroke="#fff" stroke-width="3.3"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="sysWifi" viewBox="0 0 16 16"><path d="M2 6.2A9 9 0 0 1 14 6.2M4.2 8.6a6 6 0 0 1 7.6 0M6.4 11a3 3 0 0 1 3.2 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="13.2" r="1" fill="currentColor"/></symbol>
+  <symbol id="sysVol" viewBox="0 0 16 16"><path d="M3 6h2.4L8.6 3v10L5.4 10H3z" fill="currentColor"/><path d="M10.8 5.6a3.4 3.4 0 0 1 0 4.8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></symbol>
+  <symbol id="sysBat" viewBox="0 0 16 16"><rect x="1.6" y="5" width="11" height="6" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="3.2" y="6.6" width="6" height="2.8" rx=".6" fill="currentColor"/><rect x="13.4" y="6.8" width="1.2" height="2.4" rx=".6" fill="currentColor"/></symbol>
+</svg>
+<div class="wrap">
+
+  <p class="eyebrow">方案 A · 第二稿</p>
+  <h1>拟物化剪贴板图标</h1>
+  <p class="lede">在方案 A（剪贴板 + V）上做拟物化：真实的塑料板身、压着三张纸的钢制弹簧夹、纸叠在板面上的投影。
+    立体感全部由<strong>平涂色阶</strong>堆出来——硬边的明暗带、逐层加深的纸色、偏移的实心投影，
+    没有一个 <span class="mono">gradient</span>，也没有一处模糊阴影。</p>
+
+  <div class="chips">
+    <span class="chip">无渐变 · <b>0 个 gradientStop</b></span>
+    <span class="chip">托盘背景 <b>真透明</b>（mask 掏 V）</span>
+    <span class="chip">主色 <b>#0067C0</b>（沿用现有强调色）</span>
+    <span class="chip">蓝 4 阶 · 钢灰 5 阶 · 纸 3 阶</span>
+  </div>
+  <hr class="rule">
+
+  <h2>主图标</h2>
+  <p class="sub">左 256px、右 128px / 48px。深底那块用来确认板身底部的深蓝厚度带在暗背景下不会糊掉。</p>
+  <div class="heroes">
+    <span class="plate plate-l hero-big"><svg width="256" height="256"><use href="#lod1"/></svg></span>
+    <span class="plate plate-d hero-big"><svg width="256" height="256"><use href="#lod1"/></svg></span>
+    <div class="hero-col">
+      <span class="plate plate-l hero-mid"><svg width="128" height="128"><use href="#lod1"/></svg></span>
+      <span class="plate plate-l" style="width:152px;height:96px"><svg width="48" height="48"><use href="#lod1"/></svg></span>
+    </div>
+  </div>
+
+  <h2>立体感是怎么堆出来的</h2>
+  <p class="sub">按绘制顺序四步。每一步只加平涂色块，靠色阶差和 1～1.5 单位的硬边偏移制造厚度与投影。</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-art"><svg width="104" height="104"><use href="#st1"/></svg></div>
+      <div class="step-b"><div class="step-n">01</div><div class="t">板身</div>
+        <div class="d">底部露 2.5 单位深蓝当板厚，板面内再压一条顶部亮带和一条底部暗带。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-art"><svg width="104" height="104"><use href="#st2"/></svg></div>
+      <div class="step-b"><div class="step-n">02</div><div class="t">纸叠与投影</div>
+        <div class="d">先放一块偏移 1.5 单位的实色深蓝当投影，再叠三张纸，下层依次加深。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-art"><svg width="104" height="104"><use href="#st3"/></svg></div>
+      <div class="step-b"><div class="step-n">03</div><div class="t">金属夹</div>
+        <div class="d">压舌 + 三段钢面（亮顶 / 中身 / 暗底）+ 铆钉，夹口下方一条浅灰投影落在纸上。</div></div>
+    </div>
+    <div class="step">
+      <div class="step-art"><svg width="104" height="104"><use href="#lod1"/></svg></div>
+      <div class="step-b"><div class="step-n">04</div><div class="t">品牌 V</div>
+        <div class="d">深蓝 V 落在最上一张纸的视觉中心，避开压舌与投影带。</div></div>
+    </div>
+  </div>
+  <h2>三级细节</h2>
+  <p class="sub">拟物化撑不到 16px——铆钉、纸叠、亮带在那个尺寸只会变成脏点。所以 .ico 里放三套<strong>分别绘制</strong>的图，
+    不是同一张缩放。轮廓（板身矩形 + 顶部夹子）三级完全对齐，缩小时只是细节在减，形状不变。</p>
+  <div class="lods">
+    <div class="lod">
+      <div class="lod-art"><svg width="128" height="128"><use href="#lod1"/></svg></div>
+      <div class="lod-b"><div class="lod-tag">L1 · 全细节</div><h4>拟物化</h4>
+        <p>13 个形状：板厚、明暗带、三张纸、纸叠投影、钢面三段、铆钉、夹口投影。</p>
+        <div class="lod-sizes">256 · 128 · 64 · 48</div></div>
+    </div>
+    <div class="lod">
+      <div class="lod-art"><svg width="128" height="128"><use href="#lod2"/></svg></div>
+      <div class="lod-b"><div class="lod-tag">L2 · 简化</div><h4>保留厚度</h4>
+        <p>6 个形状。去掉亮带、纸叠、铆钉、投影，只留板厚深蓝、一张白纸、压舌两级灰。</p>
+        <div class="lod-sizes">32 · 24</div></div>
+    </div>
+    <div class="lod">
+      <div class="lod-art"><svg width="128" height="128"><use href="#lod3"/></svg></div>
+      <div class="lod-b"><div class="lod-tag">L3 · 极简</div><h4>回到平涂</h4>
+        <p>3 个形状。白纸撤掉、V 直接压在板面上——20px 以下白纸只有 8px 宽，V 放进去就没了。</p>
+        <div class="lod-sizes">20 · 16</div></div>
+    </div>
+  </div>
+
+  <h2>尺寸阶梯</h2>
+  <p class="sub">全部按真实像素渲染，未放大。标签下方那行小字是该尺寸用的细节级别。</p>
+  <div class="stack2">
+    <div class="strip strip-l">
+      <div class="si"><svg width="128" height="128"><use href="#lod1"/></svg><b>128<em>L1</em></b></div>
+      <div class="si"><svg width="64" height="64"><use href="#lod1"/></svg><b>64<em>L1</em></b></div>
+      <div class="si"><svg width="48" height="48"><use href="#lod1"/></svg><b>48<em>L1</em></b></div>
+      <div class="si"><svg width="32" height="32"><use href="#lod2"/></svg><b>32<em>L2</em></b></div>
+      <div class="si"><svg width="24" height="24"><use href="#lod2"/></svg><b>24<em>L2</em></b></div>
+      <div class="si"><svg width="20" height="20"><use href="#lod3"/></svg><b>20<em>L3</em></b></div>
+      <div class="si"><svg width="16" height="16"><use href="#lod3"/></svg><b>16<em>L3</em></b></div>
+    </div>
+    <div class="strip strip-d">
+      <div class="si"><svg width="128" height="128"><use href="#lod1"/></svg><b>128<em>L1</em></b></div>
+      <div class="si"><svg width="64" height="64"><use href="#lod1"/></svg><b>64<em>L1</em></b></div>
+      <div class="si"><svg width="48" height="48"><use href="#lod1"/></svg><b>48<em>L1</em></b></div>
+      <div class="si"><svg width="32" height="32"><use href="#lod2"/></svg><b>32<em>L2</em></b></div>
+      <div class="si"><svg width="24" height="24"><use href="#lod2"/></svg><b>24<em>L2</em></b></div>
+      <div class="si"><svg width="20" height="20"><use href="#lod3"/></svg><b>20<em>L3</em></b></div>
+      <div class="si"><svg width="16" height="16"><use href="#lod3"/></svg><b>16<em>L3</em></b></div>
+    </div>
+  </div>
+
+  <h2>与上一版扁平 A 的差别</h2>
+  <div class="strip strip-l" style="gap:26px">
+    <div class="si"><svg width="96" height="96"><use href="#flatA"/></svg><b>上一稿 · 扁平</b></div>
+    <div class="si"><svg width="96" height="96"><use href="#lod1"/></svg><b>本稿 · 拟物化</b></div>
+    <div class="si"><svg width="32" height="32"><use href="#flatA"/></svg><b>32px 扁平</b></div>
+    <div class="si"><svg width="32" height="32"><use href="#lod2"/></svg><b>32px 本稿</b></div>
+    <div class="si"><svg width="16" height="16"><use href="#flatA"/></svg><b>16px 扁平</b></div>
+    <div class="si"><svg width="16" height="16"><use href="#lod3"/></svg><b>16px 本稿</b></div>
+  </div>
+  <p class="note">夹子从浅蓝色块换成钢灰实物、板面上多了纸、底部多了板厚。16px 处两者几乎一致——这是故意的，
+    小尺寸本来就该退回扁平，L3 只把夹子从浅蓝改成灰以便和大尺寸的钢色对上。</p>
+  <h2>托盘图标</h2>
+  <p class="sub">托盘是单色场景，拟物化在这里没有意义也放不下：16px 单色下钢灰和蓝色都会退化成同一团。
+    所以托盘只取<strong>轮廓剪影</strong>，V 用 mask 掏成真透明——任务栏底色直接透上来，不是填白。
+    浅色 / 深色任务栏两套，Windows 不会自动反转第三方托盘图标。</p>
+  <div class="bars">
+    <div class="bar bar-l">
+      <span class="bar-tag">浅色任务栏 #F3F3F3 · 图标 #0067C0</span>
+      <span class="sys"><svg width="16" height="16"><use href="#sysWifi"/></svg><svg width="16" height="16"><use href="#sysVol"/></svg><svg width="16" height="16"><use href="#sysBat"/></svg></span>
+      <svg width="16" height="16" style="color:var(--tray-light)"><use href="#tray"/></svg>
+      <span class="clock">14:26<br>2026/9/5</span>
+    </div>
+    <div class="bar bar-d">
+      <span class="bar-tag">深色任务栏 #202020 · 图标 #4CB2F5</span>
+      <span class="sys"><svg width="16" height="16"><use href="#sysWifi"/></svg><svg width="16" height="16"><use href="#sysVol"/></svg><svg width="16" height="16"><use href="#sysBat"/></svg></span>
+      <svg width="16" height="16" style="color:var(--tray-dark)"><use href="#tray"/></svg>
+      <span class="clock">14:26<br>2026/9/5</span>
+    </div>
+  </div>
+  <div class="stack2" style="margin-top:14px">
+    <div class="strip strip-wl">
+      <div class="si"><svg width="16" height="16" style="color:var(--tray-light)"><use href="#tray"/></svg><b>16<em>100%</em></b></div>
+      <div class="si"><svg width="20" height="20" style="color:var(--tray-light)"><use href="#tray"/></svg><b>20<em>125%</em></b></div>
+      <div class="si"><svg width="24" height="24" style="color:var(--tray-light)"><use href="#tray"/></svg><b>24<em>150%</em></b></div>
+      <div class="si"><svg width="32" height="32" style="color:var(--tray-light)"><use href="#tray"/></svg><b>32<em>200%</em></b></div>
+    </div>
+    <div class="strip strip-wd">
+      <div class="si"><svg width="16" height="16" style="color:var(--tray-dark)"><use href="#tray"/></svg><b>16<em>100%</em></b></div>
+      <div class="si"><svg width="20" height="20" style="color:var(--tray-dark)"><use href="#tray"/></svg><b>20<em>125%</em></b></div>
+      <div class="si"><svg width="24" height="24" style="color:var(--tray-dark)"><use href="#tray"/></svg><b>24<em>150%</em></b></div>
+      <div class="si"><svg width="32" height="32" style="color:var(--tray-dark)"><use href="#tray"/></svg><b>32<em>200%</em></b></div>
+    </div>
+  </div>
+  <p class="note">对比度：#0067C0 对 #F3F3F3 约 5.2:1，#4CB2F5 对 #202020 约 7.4:1，两端都过 AA。
+    单用一个蓝色必然有一端不及格，这是要两套文件的唯一原因。</p>
+
+  <h2>16 / 24px 栅格检查</h2>
+  <p class="sub">真按目标尺寸栅格化后再用最近邻放大，看的是实际落在哪些像素上，不是把矢量放大。</p>
+  <div class="pxgrid">
+    <div class="pxcol">
+      <h4>应用图标 L3 @16</h4>
+      <p class="pxsub">板身 11px 宽、夹子 4.5px、V 笔画约 1.9px</p>
+      <div class="pxpair">
+        <canvas class="px" data-sym="lod3" data-size="16" data-color="#0067C0" data-bg="#FBFBFB"></canvas>
+        <canvas class="px" data-sym="lod3" data-size="16" data-color="#0067C0" data-bg="#2B2B2B"></canvas>
+      </div>
+      <div class="pxfoot">放大 9 倍</div>
+    </div>
+    <div class="pxcol">
+      <h4>应用图标 L2 @24</h4>
+      <p class="pxsub">白纸 11.6px 宽，V 笔画约 2.5px，板厚 1px</p>
+      <div class="pxpair">
+        <canvas class="px" data-sym="lod2" data-size="24" data-color="#0067C0" data-bg="#FBFBFB"></canvas>
+        <canvas class="px" data-sym="lod2" data-size="24" data-color="#0067C0" data-bg="#2B2B2B"></canvas>
+      </div>
+      <div class="pxfoot">放大 6 倍</div>
+    </div>
+    <div class="pxcol">
+      <h4>托盘 @16</h4>
+      <p class="pxsub">V 是透明缺口，底色应当透过来</p>
+      <div class="pxpair">
+        <canvas class="px" data-sym="tray" data-size="16" data-color="#0067C0" data-bg="#F3F3F3"></canvas>
+        <canvas class="px" data-sym="tray" data-size="16" data-color="#4CB2F5" data-bg="#202020"></canvas>
+      </div>
+      <div class="pxfoot">放大 9 倍</div>
+    </div>
+  </div>
+  <p class="note">浏览器栅格化，和最终 .ico 生成器会有细微差别；16px 那一档正式出图时需要手工对齐像素边界。</p>
+  <h2>标题栏小标</h2>
+  <p class="sub"><span class="mono">MainWindow.xaml</span> 里那个 18×18 的方块是全项目唯一的渐变，正好一起换掉。18px 用 L3。</p>
+  <div class="tbs">
+    <div class="tb"><span class="old-mark"></span><span class="tb-name">Pasty</span><span class="tb-tag">现状 · 蓝紫渐变</span></div>
+    <div class="tb"><svg width="18" height="18" style="flex:none"><use href="#lod3"/></svg><span class="tb-name">Pasty</span><span class="tb-tag">替换后 · L3</span></div>
+  </div>
+
+  <h2>色板</h2>
+  <p class="sub">四阶蓝 + 五阶钢灰 + 三阶纸。每个色阶都是独立平涂块，没有中间过渡。</p>
+  <div class="sw">
+    <div class="swi"><div class="swc" style="background:#3C90DC"></div><div class="swb"><div class="h">#3C90DC</div><div class="n">板面顶部亮带</div></div></div>
+    <div class="swi"><div class="swc" style="background:#0067C0"></div><div class="swb"><div class="h">#0067C0</div><div class="n">板面主色 · 项目强调色</div></div></div>
+    <div class="swi"><div class="swc" style="background:#00559E"></div><div class="swb"><div class="h">#00559E</div><div class="n">板面底部暗带 / 纸叠投影</div></div></div>
+    <div class="swi"><div class="swc" style="background:#00427C"></div><div class="swb"><div class="h">#00427C</div><div class="n">板身厚度 / 品牌 V</div></div></div>
+    <div class="swi"><div class="swc" style="background:#C6D0DA"></div><div class="swb"><div class="h">#C6D0DA</div><div class="n">钢面顶亮</div></div></div>
+    <div class="swi"><div class="swc" style="background:#9DAAB7"></div><div class="swb"><div class="h">#9DAAB7</div><div class="n">钢面中身</div></div></div>
+    <div class="swi"><div class="swc" style="background:#7E8B99"></div><div class="swb"><div class="h">#7E8B99</div><div class="n">压舌</div></div></div>
+    <div class="swi"><div class="swc" style="background:#6F7C8A"></div><div class="swb"><div class="h">#6F7C8A</div><div class="n">钢面暗底</div></div></div>
+    <div class="swi"><div class="swc" style="background:#5C6874"></div><div class="swb"><div class="h">#5C6874</div><div class="n">铆钉</div></div></div>
+    <div class="swi"><div class="swc" style="background:#FFFFFF"></div><div class="swb"><div class="h">#FFFFFF</div><div class="n">最上层纸</div></div></div>
+    <div class="swi"><div class="swc" style="background:#CFDBE6"></div><div class="swb"><div class="h">#CFDBE6</div><div class="n">第二层纸</div></div></div>
+    <div class="swi"><div class="swc" style="background:#A9BDD1"></div><div class="swb"><div class="h">#A9BDD1</div><div class="n">第三层纸</div></div></div>
+    <div class="swi"><div class="swc" style="background:#DCE3EA"></div><div class="swb"><div class="h">#DCE3EA</div><div class="n">夹口落在纸上的投影</div></div></div>
+    <div class="swi"><div class="swc" style="background:#4CB2F5"></div><div class="swb"><div class="h">#4CB2F5</div><div class="n">深色任务栏托盘色</div></div></div>
+  </div>
+
+  <h2>确认后要交付与改动的</h2>
+  <div class="deliver">
+    <div class="row"><div class="k">Pasty/Assets/Pasty.ico</div>
+      <div class="v">256 / 128 / 64 / 48 用 L1，32 / 24 用 L2，20 / 16 用 L3。<code>&lt;ApplicationIcon&gt;</code> 指过去，同时给两个窗口调 <code>AppWindow.SetIcon</code>。</div></div>
+    <div class="row"><div class="k">Pasty/Assets/Tray-light.ico<br>Pasty/Assets/Tray-dark.ico</div>
+      <div class="v">各含 32 / 24 / 20 / 16，单色 + 透明缺口。非打包应用要靠 <code>CopyToOutputDirectory</code> 带到输出目录，运行时从磁盘读。</div></div>
+    <div class="row"><div class="k">Services/Win32.cs</div>
+      <div class="v">加 <code>LoadImageW</code>（<code>IMAGE_ICON</code> + <code>LR_LOADFROMFILE</code>），按 DPI 请求对应像素尺寸那一档。</div></div>
+    <div class="row"><div class="k">Services/TrayIconService.cs</div>
+      <div class="v">换掉 <code>LoadIconW(IDI_APPLICATION)</code>，按注册表 <code>SystemUsesLightTheme</code> 选浅/深色那一套，主题变化时用 <code>NIM_MODIFY</code> 换图标。<code>TaskbarCreated</code> 重建那条路径也要拿到有效句柄。</div></div>
+    <div class="row"><div class="k">Views/MainWindow.xaml</div>
+      <div class="v">18×18 的 <code>LinearGradientBrush</code> Border 换成 L3 图形，项目里最后一处渐变随之消失。</div></div>
+  </div>
+
+  <div class="warn"><b>一处要一起改的注释。</b>
+    <span class="mono">TrayIconService.Remove()</span> 现在写着「图标来自 <span class="mono">LoadIcon(IDI_APPLICATION)</span>，是系统共享图标，由系统自己管理生命周期」，
+    所以那里刻意不调 <span class="mono">DestroyIcon</span>。换成自己加载的 .ico 后这句话不再成立：句柄归我们，
+    <b>必须</b> 销毁，而且主题切换换图标时也要销毁旧句柄，否则每切一次主题漏一个 icon 句柄。按项目约定，注释要跟着代码一起更新。</div>
+
+  <div class="warn"><b>关于「无渐变」。</b>
+    拟物化通常靠渐变和模糊阴影，这一稿按你最初那条要求全部用平涂色阶替代：硬边明暗带、逐层加深的纸色、偏移实心投影。
+    如果你希望拟物化就上真渐变和柔和高光，说一声我加，形状不用变。</div>
+
+  <p class="foot">Pasty 图标提案 · 方案 A 拟物化 · 2026-09-05</p>
+</div>
+<script>
+(function () {
+  'use strict';
+  var BOX = 144; // CSS 显示边长，固定，避免画布被缩放导致像素格自身发虚
+
+  // 把 symbol 内容序列化成独立 SVG。lod2 / lod3 / tray 都不引用外部 defs，
+  // 所以可以这样单独取出；lod1 里是 <use href="#pBoard">，脱离文档就空了，因此不做这一档。
+  function dataUri(symbolId, color) {
+    var sym = document.getElementById(symbolId);
+    var vb = sym.getAttribute('viewBox');
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb +
+      '" width="64" height="64" style="color:' + color + '">' + sym.innerHTML + '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  function render(cv) {
+    var n = parseInt(cv.getAttribute('data-size'), 10) || 16;
+    var scale = Math.max(3, Math.floor(BOX / n));
+    var side = scale * n;
+    var dpr = window.devicePixelRatio || 1;
+
+    cv.style.width = side + 'px';
+    cv.style.height = side + 'px';
+    cv.width = Math.round(side * dpr);
+    cv.height = Math.round(side * dpr);
+
+    var ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = cv.getAttribute('data-bg');
+    ctx.fillRect(0, 0, side, side);
+
+    // 先用一块离屏画布按目标尺寸真实栅格化，再最近邻放大
+    var off = document.createElement('canvas');
+    off.width = n; off.height = n;
+    var octx = off.getContext('2d');
+
+    var img = new Image();
+    img.onload = function () {
+      octx.clearRect(0, 0, n, n);
+      octx.drawImage(img, 0, 0, n, n);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, 0, 0, n, n, 0, 0, side, side);
+      // 像素栅格线
+      ctx.strokeStyle = 'rgba(128,145,165,.30)';
+      ctx.lineWidth = 1 / dpr;
+      for (var i = 1; i < n; i++) {
+        var p = i * scale + .5 / dpr;
+        ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, side); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, p); ctx.lineTo(side, p); ctx.stroke();
+      }
+    };
+    img.src = dataUri(cv.getAttribute('data-sym'), cv.getAttribute('data-color'));
+  }
+
+  var list = document.querySelectorAll('canvas.px');
+  for (var i = 0; i < list.length; i++) render(list[i]);
+})();
+</script>
+</body>
+</html>
+

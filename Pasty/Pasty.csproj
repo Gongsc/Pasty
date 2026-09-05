@@ -17,7 +17,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Pasty</AssemblyName>
     <Version>1.0.0</Version>
+    <!-- exe 自身的图标（资源管理器、任务栏、Alt+Tab）。改形状要改 tools/IconGen 里的几何再重新生成。 -->
+    <ApplicationIcon>Assets\Pasty.ico</ApplicationIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- 三个 .ico 都要复制到输出目录：unpackaged 应用没有 ms-appx 资源，
+         托盘图标用 LoadImage 从磁盘读，窗口图标走 AppWindow.SetIcon(路径)。
+         Pasty.ico 同时被 ApplicationIcon 编进 exe 的资源段（那份管资源管理器/任务栏）。 -->
+    <Content Include="Assets\Pasty.ico;Assets\Tray-light.ico;Assets\Tray-dark.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250205002" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />

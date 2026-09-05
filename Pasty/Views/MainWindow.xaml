@@ -23,14 +23,18 @@
             </Grid.ColumnDefinitions>
             <Grid x:Name="AppTitleBar" Background="Transparent">
                 <StackPanel Orientation="Horizontal" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Center">
-                    <Border Width="18" Height="18" CornerRadius="4">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#0067C0" Offset="0" />
-                                <GradientStop Color="#7A4DD6" Offset="1" />
-                            </LinearGradientBrush>
-                        </Border.Background>
-                    </Border>
+                    <!-- 与托盘/16px 应用图标同一套几何（L3，64 单位网格，见 tools/IconGen/Art.cs）。
+                         Viewbox 取 22 而不是 18：图形只占网格的 48×52，这样实际显示出来才接近 18px。 -->
+                    <Viewbox Width="22" Height="22">
+                        <Canvas Width="64" Height="64">
+                            <Rectangle Canvas.Left="8" Canvas.Top="8" Width="48" Height="48"
+                                       RadiusX="5" RadiusY="5" Fill="#0067C0" />
+                            <Rectangle Canvas.Left="24" Canvas.Top="4" Width="16" Height="8"
+                                       RadiusX="2.6" RadiusY="2.6" Fill="#8A97A5" />
+                            <Path Data="M 22,26 L 32,40 L 42,26" Stroke="White" StrokeThickness="8"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                        </Canvas>
+                    </Viewbox>
                     <TextBlock Text="Pasty" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
             </Grid>
