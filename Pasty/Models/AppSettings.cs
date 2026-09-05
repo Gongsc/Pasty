@@ -47,7 +47,7 @@ public class AppSettings
         if ((mods & MOD_ALT) != 0) parts.Add("Alt");
         if ((mods & MOD_SHIFT) != 0) parts.Add("Shift");
         if ((mods & MOD_WIN) != 0) parts.Add("Win");
-        parts.Add(((char)vk).ToString());
+        parts.Add(vk == 0x20 ? "Space" : ((char)vk).ToString()); // 空格键否则会显示成一个看不见的空白
         return string.Join(" + ", parts);
     }
 }

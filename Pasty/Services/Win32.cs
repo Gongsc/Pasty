@@ -12,6 +12,7 @@ internal static class Win32
     public const uint WM_HOTKEY = 0x0312;
     public const uint WM_APP_TRAY = 0x8100;
     public const uint WM_COMMAND = 0x0111;
+    public const uint WM_NULL = 0x0000;
     public const uint WM_KEYDOWN = 0x0100;
     public const uint WM_SYSKEYDOWN = 0x0104;
     public const uint WM_KEYUP = 0x0101;
@@ -22,6 +23,9 @@ internal static class Win32
     public const uint VK_SHIFT = 0x10;
     public const uint VK_MENU = 0x12; // Alt
     public const uint VK_V = 0x56;
+
+    /// <summary>不进任务栏、不进 Alt+Tab。承载消息的顶层窗口必须带上，否则会露出一个空窗口按钮。</summary>
+    public const uint WS_EX_TOOLWINDOW = 0x0080;
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool RegisterClassW(ref WNDCLASSW lpWndClass);
@@ -264,7 +268,10 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern uint TrackPopupMenu(IntPtr hMenu, uint uFlags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
 
-    public const uint TPM_LEFTALIGN = 0x0, TPM_RETURNCMD = 0x100;
+    public const uint TPM_LEFTALIGN = 0x0, TPM_RIGHTBUTTON = 0x2, TPM_RETURNCMD = 0x100;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool PostMessageW(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport("user32.dll")]
     public static extern bool DestroyMenu(IntPtr hMenu);

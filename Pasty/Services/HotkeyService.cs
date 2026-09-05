@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.UI.Dispatching;
+using Pasty.Models;
 
 namespace Pasty.Services;
 /// <summary>
@@ -15,10 +16,22 @@ public sealed class HotkeyService : IDisposable
     private readonly IntPtr _hwnd;
     private readonly DispatcherQueue _dispatcher;
     private IntPtr _hook;
+    private int _hookError;
     private readonly Win32.KeyboardHookDelegate _hookProc; // 防 GC
     private bool _vKeyDown; // 物理 V 键是否处于按下状态（用于忽略自动重复）
     public static volatile bool OverrideCtrlV;
     public static volatile bool SuppressHookAction;
+
+    /// <summary>
+    /// 热键注册与钩子安装的失败说明，空表示一切正常。
+    /// RegisterHotKey 失败是常态而非异常——组合键被别的常驻程序抢先注册就会失败。
+    /// 原先四个返回值全部丢弃，用户只知道“按了没反应”，无从判断是撞了快捷键、
+    /// 还是这个功能坏了，换一个组合就能解决的问题会一直卡在那里。
+    /// </summary>
+    public IReadOnlyList<string> RegistrationErrors { get; private set; } = Array.Empty<string>();
+
+    /// <summary>RegistrationErrors 更新后触发，供设置界面刷新提示。</summary>
+    public event Action? RegistrationChanged;
 
     /// <summary>诊断开关：存在 %LOCALAPPDATA%\Pasty\hooktest 文件时，注入按键也走物理键路径。</summary>
     public static readonly bool HookTestMode = File.Exists(Path.Combine(
@@ -53,9 +66,28 @@ public sealed class HotkeyService : IDisposable
     {
         Win32.UnregisterHotKey(_hwnd, IdShowPanel);
         Win32.UnregisterHotKey(_hwnd, IdPasteTop);
-        Win32.RegisterHotKey(_hwnd, IdShowPanel, App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk);
-        Win32.RegisterHotKey(_hwnd, IdPasteTop, App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk);
+
+        var errors = new List<string>();
+        TryRegister(IdShowPanel, App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk, "唤出面板", errors);
+        TryRegister(IdPasteTop, App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk, "粘贴第一条", errors);
+
         OverrideCtrlV = App.Settings.OverrideCtrlV;
+        // 钩子只在启动时装一次；开着“覆盖 Ctrl+V”却没装上钩子，这个开关就是纯粹的摆设
+        if (OverrideCtrlV && _hook == IntPtr.Zero)
+            errors.Add($"键盘钩子安装失败（错误码 {_hookError}），“覆盖系统 Ctrl+V”不会生效，请重启 Pasty");
+
+        RegistrationErrors = errors;
+        RegistrationChanged?.Invoke();
+    }
+
+    /// <summary>注册一个热键；失败时把可操作的说明追加到 errors。</summary>
+    private void TryRegister(int id, uint mods, uint vk, string label, List<string> errors)
+    {
+        if (Win32.RegisterHotKey(_hwnd, id, mods, vk)) return;
+        var err = Marshal.GetLastWin32Error();
+        errors.Add($"{label}快捷键 {AppSettings.HotkeyName(mods, vk)} 注册失败（错误码 {err}），" +
+                   "通常是已被其他程序占用，换一个组合即可");
+        Trace.Log($"RegisterHotKey 失败 id={id} err={err}");
     }
 
     private bool OnMessage(uint msg, IntPtr wParam, IntPtr lParam)
@@ -80,6 +112,8 @@ public sealed class HotkeyService : IDisposable
     private void InstallHook()
     {
         _hook = Win32.SetWindowsHookExW(Win32.WH_KEYBOARD_LL, _hookProc, Win32.GetModuleHandleW(null), 0);
+        _hookError = _hook == IntPtr.Zero ? Marshal.GetLastWin32Error() : 0;
+        if (_hook == IntPtr.Zero) Trace.Log($"SetWindowsHookEx 失败 err={_hookError}");
     }
 
     private IntPtr LowLevelHook(int nCode, IntPtr wParam, IntPtr lParam)

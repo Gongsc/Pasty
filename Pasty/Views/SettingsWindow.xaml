@@ -106,6 +106,8 @@
                             </StackPanel>
                             <ToggleSwitch x:Name="OverrideToggle" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
                         </Grid>
+                        <InfoBar x:Name="HotkeyWarning" Severity="Warning" IsOpen="False" IsClosable="False"
+                                 Title="快捷键未生效" Margin="0,6,0,4" />
                     </StackPanel>
                 </Border>
 

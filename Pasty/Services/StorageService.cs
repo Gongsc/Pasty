@@ -75,55 +75,86 @@ public static class StorageService
         }
     }
 
-    private static readonly SemaphoreSlim SaveLock = new(1, 1);
+    private static readonly object WriteLock = new(); // 串行化真正的文件写入
+    private static readonly object PendingLock = new();
 
-    /// <summary>Flush 之后置起，让还排在队列里的后台保存直接放弃——它们手上的快照都比 Flush 的旧。</summary>
+    /// <summary>待写入的最新快照。后来的直接覆盖先前的：只有最新状态值得落盘。</summary>
+    private static List<ClipItem>? s_pending;
+    private static bool s_writing;
+
+    /// <summary>Flush 之后置起，让还没写的后台保存直接放弃——它们手上的快照都比 Flush 的旧。</summary>
     private static volatile bool s_shuttingDown;
 
-    /// <summary>后台线程异步落盘，避免阻塞 UI 线程（低级键盘钩子依赖 UI 线程及时响应）。</summary>
+    /// <summary>
+    /// 后台线程异步落盘，避免阻塞 UI 线程（低级键盘钩子依赖 UI 线程及时响应）。
+    ///
+    /// 全程只有一个写入任务，写的永远是最新快照。原先每次调用都单独 Task.Run 去抢锁，
+    /// 抢到的顺序由线程池决定，与调用顺序无关：连续几次改动（复制一条、再置顶、再删除）
+    /// 之间旧快照完全可能后写，把新状态覆盖回去，下次启动看到的是中间某个状态。
+    /// 顺带把一串连续改动合并成一次写入，不再为每次改动都序列化整个列表。
+    /// </summary>
     public static void Save()
     {
         if (s_shuttingDown) return;
         var snapshot = Items.ToList();
-        Task.Run(async () =>
+        lock (PendingLock)
         {
-            await SaveLock.WaitAsync();
-            try
+            s_pending = snapshot;
+            if (s_writing) return; // 写入任务还在跑，它收工前会再看一眼 s_pending
+            s_writing = true;
+        }
+        Task.Run(DrainPending);
+    }
+
+    private static void DrainPending()
+    {
+        while (true)
+        {
+            List<ClipItem> snapshot;
+            lock (PendingLock)
             {
-                if (s_shuttingDown) return;
-                WriteIndex(snapshot);
+                if (s_pending == null || s_shuttingDown)
+                {
+                    s_writing = false;
+                    return;
+                }
+                snapshot = s_pending;
+                s_pending = null;
             }
-            catch { /* 忽略瞬时 IO 错误，下次保存重试 */ }
-            finally
-            {
-                SaveLock.Release();
-            }
-        });
+            try { WriteIndex(snapshot); }
+            catch { /* 忽略瞬时 IO 错误，下次保存会带着更新的快照重试 */ }
+        }
     }
 
     /// <summary>
-    /// 退出前同步落盘。Save() 是后台 fire-and-forget，进程随即结束就会丢掉最后一次写入——
+    /// 退出前同步落盘。Save() 走后台队列，进程随即结束就会丢掉最后一次写入——
     /// 表现为退出前刚复制的几条、刚做的置顶或编辑，下次启动全都不见了。
     /// 等不到锁就放弃，绝不因为落盘卡住退出流程。
     /// </summary>
     public static void Flush(int waitMs = 2000)
     {
         var snapshot = Items.ToList();
-        var acquired = false;
+        var taken = false;
         try
         {
-            acquired = SaveLock.Wait(waitMs); // 等在飞的那次后台保存写完，避免两个进程内写者互踩
-            s_shuttingDown = true;            // 队列里还没跑的保存从此作废，不会用旧快照盖掉这次
-            WriteIndex(snapshot);
+            // 等在飞的那次后台写入完成；拿不到锁就不写，宁可丢掉这次也不能和别人同时写 index
+            Monitor.TryEnter(WriteLock, waitMs, ref taken);
+            s_shuttingDown = true; // 还没写的后台保存从此作废，不会用旧快照盖掉这次
+            if (taken) WriteIndexCore(snapshot);
         }
         catch { /* 退出路径上任何失败都只能忍受 */ }
         finally
         {
-            if (acquired) SaveLock.Release();
+            if (taken) Monitor.Exit(WriteLock);
         }
     }
 
     private static void WriteIndex(List<ClipItem> snapshot)
+    {
+        lock (WriteLock) WriteIndexCore(snapshot);
+    }
+
+    private static void WriteIndexCore(List<ClipItem> snapshot)
     {
         Directory.CreateDirectory(DataDir);
         var tmp = IndexPath + ".tmp";

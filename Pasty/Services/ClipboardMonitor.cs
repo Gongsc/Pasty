@@ -45,49 +45,99 @@ public sealed class ClipboardMonitor
 
     private async Task ReadClipboardAsync()
     {
-        try
-        {
-            var content = Clipboard.GetContent();
-            if (content.Contains(StandardDataFormats.Text))
-            {
-                var text = await content.GetTextAsync();
-                if (string.IsNullOrWhiteSpace(text)) return;
-                ClipboardChanged?.Invoke(new ClipItem { Type = ClipType.Text, Text = text });
-            }
-            else if (content.Contains(StandardDataFormats.Bitmap))
-            {
-                var reference = await content.GetBitmapAsync();
-                using var stream = await reference.OpenReadAsync();
-                var decoder = await BitmapDecoder.CreateAsync(stream);
-                var pixelData = await decoder.GetPixelDataAsync();
-                var png = await EncodePngAsync(decoder.BitmapPixelFormat, pixelData.DetachPixelData(), (int)decoder.PixelWidth, (int)decoder.PixelHeight);
-                if (png == null) return;
-                var path = StorageService.SaveImage(png);
-                ClipboardChanged?.Invoke(new ClipItem { Type = ClipType.Image, ImagePath = path });
-            }
-        }
-        catch
-        {
-            // 剪贴板被其他进程占用时读取失败，忽略本次
-        }
+        var item = await ReadWithRetryAsync();
+        if (item == null) return;
+        try { ClipboardChanged?.Invoke(item); }
+        catch (Exception ex) { Trace.Log($"clipboard 通知处理失败: {ex.Message}"); }
     }
 
-    private static async Task<byte[]?> EncodePngAsync(BitmapPixelFormat format, byte[] pixels, int width, int height)
+    /// <summary>
+    /// 读剪贴板，失败则重试。剪贴板同一时刻只能被一个进程打开，别的应用
+    /// （Office、浏览器、远程桌面、密码管理器）正持有时 GetContent 直接抛异常。
+    /// 原先一次失败就静默丢弃整条，用户这次复制凭空消失且没有任何提示。
+    /// </summary>
+    private static async Task<ClipItem?> ReadWithRetryAsync()
+    {
+        const int attempts = 5;
+        for (var i = 0; i < attempts; i++)
+        {
+            try
+            {
+                return await ReadOnceAsync();
+            }
+            catch (Exception ex)
+            {
+                if (i == attempts - 1)
+                {
+                    Trace.Log($"clipboard 读取重试耗尽，本次变化丢弃: {ex.Message}");
+                    return null;
+                }
+                await Task.Delay(60 * (i + 1)); // 退让，等占用剪贴板的进程收工
+            }
+        }
+        return null;
+    }
+
+    /// <summary>读一次剪贴板；内容既不是文本也不是图片时返回 null。失败向上抛，由调用方决定是否重试。</summary>
+    private static async Task<ClipItem?> ReadOnceAsync()
+    {
+        var content = Clipboard.GetContent();
+        if (content.Contains(StandardDataFormats.Text))
+        {
+            var text = await content.GetTextAsync();
+            return string.IsNullOrWhiteSpace(text)
+                ? null
+                : new ClipItem { Type = ClipType.Text, Text = text };
+        }
+        if (content.Contains(StandardDataFormats.Bitmap))
+        {
+            var reference = await content.GetBitmapAsync();
+            using var stream = await reference.OpenReadAsync();
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            var png = await EncodePngAsync(decoder);
+            return png == null
+                ? null
+                : new ClipItem { Type = ClipType.Image, ImagePath = StorageService.SaveImage(png) };
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 把解码出的位图编码成 PNG。
+    ///
+    /// 两端都显式指定 Bgra8 + Straight。原先用无参 GetPixelDataAsync（返回源图的
+    /// 原生格式与原生 alpha 模式），却把 SetPixelData 的 alpha 模式硬编码成
+    /// Premultiplied：源图是直通 alpha 时（截图工具和浏览器给的位图常常是），
+    /// 编码器会按“已预乘”再反算一遍，半透明区域整体发暗、边缘出现黑边。
+    /// PNG 存的本来就是直通 alpha，两端都取 Straight 最省事也最不容易再错，
+    /// 并且与 PasteService 写回剪贴板时请求的 alpha 模式一致。
+    /// </summary>
+    private static async Task<byte[]?> EncodePngAsync(BitmapDecoder decoder)
     {
         try
         {
+            var pixelData = await decoder.GetPixelDataAsync(
+                BitmapPixelFormat.Bgra8,
+                BitmapAlphaMode.Straight,
+                new BitmapTransform(),
+                ExifOrientationMode.IgnoreExifOrientation,
+                ColorManagementMode.DoNotColorManage);
+
             using var ms = new InMemoryRandomAccessStream();
             var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, ms);
-            encoder.SetPixelData(format, BitmapAlphaMode.Premultiplied, (uint)width, (uint)height, 96, 96, pixels);
+            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight,
+                decoder.PixelWidth, decoder.PixelHeight, 96, 96, pixelData.DetachPixelData());
             await encoder.FlushAsync();
+
             var bytes = new byte[ms.Size];
             using var reader = new DataReader(ms.GetInputStreamAt(0));
             await reader.LoadAsync((uint)ms.Size);
             reader.ReadBytes(bytes);
             return bytes;
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.Log($"clipboard PNG 编码失败: {ex.Message}"); // 编码失败与占用无关，重试也没用
             return null;
         }
     }

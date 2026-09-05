@@ -7,7 +7,6 @@ public sealed class TrayIconService
 {
     private const uint IdOpen = 1, IdSettings = 2, IdExit = 3;
 
-    private static IntPtr s_icon;
     private static IntPtr s_hwnd;
     private static bool s_added;
     private static uint s_taskbarCreatedMsg;
@@ -36,7 +35,6 @@ public sealed class TrayIconService
             hIcon = Win32.LoadIconW(IntPtr.Zero, new IntPtr(32512) /* IDI_APPLICATION */),
             szTip = "Pasty 剪切板管理器",
         };
-        s_icon = data.hIcon;
         s_added = Win32.Shell_NotifyIconW(Win32.NIM_ADD, ref data);
     }
 
@@ -51,7 +49,9 @@ public sealed class TrayIconService
         };
         Win32.Shell_NotifyIconW(Win32.NIM_DELETE, ref data);
         s_added = false;
-        if (s_icon != IntPtr.Zero) Win32.DestroyIcon(s_icon);
+        // 图标来自 LoadIcon(IDI_APPLICATION)，是系统共享图标，由系统自己管理生命周期。
+        // 原先在这里 DestroyIcon：句柄不属于我们，销毁的是全进程共用的那一份，
+        // 其他还在用它的地方（以及下次 Explorer 重启后的 Add）就拿到了废句柄。
     }
 
     private bool OnMessage(uint msg, IntPtr wParam, IntPtr lParam)
@@ -79,7 +79,17 @@ public sealed class TrayIconService
         Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, IntPtr.Zero, "");
         Win32.AppendMenuW(menu, Win32.MF_STRING, new IntPtr(IdExit), "退出");
         Win32.GetCursorPos(out var p);
-        var cmd = Win32.TrackPopupMenu(menu, Win32.TPM_LEFTALIGN | Win32.TPM_RETURNCMD, p.X, p.Y, 0, App.MessageWindow.Handle, IntPtr.Zero);
+
+        // 菜单的消息循环只服务于前台窗口：owner 不在前台时，点击别处或按 Esc
+        // 都不会让菜单消失，它会一直挂在屏幕上，直到再点它自己一次。
+        var owner = App.MessageWindow.Handle;
+        Win32.ForceForeground(owner);
+        var cmd = Win32.TrackPopupMenu(menu,
+            Win32.TPM_LEFTALIGN | Win32.TPM_RIGHTBUTTON | Win32.TPM_RETURNCMD,
+            p.X, p.Y, 0, owner, IntPtr.Zero);
+        // 菜单收起后 owner 还欠一条消息才肯把菜单模式彻底退干净（否则下一次右键
+        // 首次点击会被吞掉），投一条空消息把消息循环踢一下即可
+        Win32.PostMessageW(owner, Win32.WM_NULL, IntPtr.Zero, IntPtr.Zero);
         Win32.DestroyMenu(menu);
         switch ((uint)cmd)
         {

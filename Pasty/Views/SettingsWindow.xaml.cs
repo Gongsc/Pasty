@@ -48,6 +48,23 @@ public sealed partial class SettingsWindow : Window
         HideOnDeactivateToggle.IsOn = App.Settings.HideOnDeactivate;
         SelectByTag(ThemeCombo, App.Settings.Theme);
         _loading = false;
+
+        UpdateHotkeyWarning();
+        App.Hotkeys.RegistrationChanged += UpdateHotkeyWarning;
+        // 设置窗口每次打开都是新实例，不退订的话旧实例会一直挂在事件上，
+        // 下次注册失败时对着已关闭窗口的控件写字
+        Closed += (s, e) => App.Hotkeys.RegistrationChanged -= UpdateHotkeyWarning;
+    }
+
+    /// <summary>
+    /// 把热键注册失败如实显示出来。这里是用户唯一会来换快捷键组合的地方，
+    /// 提示放在别处等于没有。
+    /// </summary>
+    private void UpdateHotkeyWarning()
+    {
+        var errors = App.Hotkeys.RegistrationErrors;
+        HotkeyWarning.Message = string.Join("\n", errors);
+        HotkeyWarning.IsOpen = errors.Count > 0;
     }
 
     public void ApplyTheme(ElementTheme theme) => RootGrid.RequestedTheme = theme;
