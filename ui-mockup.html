@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Pasty UI 设计原型</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI Variable","Segoe UI","Microsoft YaHei UI",sans-serif; }
+  body { background:#f5f5f5; padding:40px; display:flex; flex-direction:column; align-items:center; gap:60px; }
+  h2.cap { color:#555; font-size:15px; font-weight:600; margin-bottom:-40px; }
+  .frame { background:linear-gradient(135deg,#dfe7ef 0%,#e8e2f0 50%,#dce9e4 100%); border-radius:12px; padding:36px; position:relative; overflow:hidden; }
+  .frame::before{ content:""; position:absolute; inset:0; background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><circle cx="40" cy="60" r="90" fill="rgba(255,255,255,0.25)"/><circle cx="170" cy="180" r="70" fill="rgba(255,255,255,0.2)"/></svg>'); }
+
+  /* ---------- 弹出面板 ---------- */
+  .panel { width:420px; border-radius:10px; overflow:hidden; position:relative;
+    background:rgba(249,249,249,0.88); backdrop-filter:blur(30px);
+    box-shadow:0 16px 48px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06); }
+  .p-search { display:flex; align-items:center; gap:8px; margin:12px; padding:7px 12px;
+    background:#fff; border:1px solid rgba(0,0,0,0.08); border-bottom:2px solid #0067c0; border-radius:6px; }
+  .p-search svg{ flex:none; }
+  .p-search input{ border:none; outline:none; font-size:13px; width:100%; background:transparent; color:#1a1a1a; }
+  .p-hint { display:flex; justify-content:space-between; padding:0 16px 6px; font-size:10.5px; color:#8a8a8a; }
+  .p-hint b{ font-weight:600; color:#666; }
+  .sec-title { font-size:11px; font-weight:600; color:#5d5d5d; padding:8px 16px 4px; }
+  .item { display:flex; gap:10px; margin:3px 8px; padding:9px 10px; border-radius:6px; align-items:flex-start; cursor:default; }
+  .item:hover { background:rgba(0,0,0,0.045); }
+  .item.sel { background:#cfe4f7; outline:1px solid rgba(0,103,192,0.35); }
+  .ic { flex:none; width:28px; height:28px; border-radius:5px; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .ic.text { background:#e8f0fb; color:#005fb8; }
+  .ic.img  { background:#f0e8fb; color:#7a4dd6; }
+  .ic.pin  { background:#fdf2d8; color:#b47f00; }
+  .body { flex:1; min-width:0; }
+  .txt { font-size:12.5px; color:#1a1a1a; line-height:1.45; max-height:38px; overflow:hidden;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+  .txt code{ font-family:Consolas,monospace; background:rgba(0,0,0,0.05); padding:0 3px; border-radius:3px; }
+  .meta { font-size:10.5px; color:#8a8a8a; margin-top:3px; display:flex; gap:6px; align-items:center; }
+  .tag { font-size:9.5px; padding:1px 6px; border-radius:8px; background:rgba(0,0,0,0.06); color:#666; }
+  .tag.blue{ background:#dbeafe; color:#005fb8; }
+  .thumb { width:100%; height:74px; border-radius:5px; background:
+    repeating-conic-gradient(#e6e0f5 0% 25%, #f3eefc 0% 50%) 0 0/24px 24px;
+    display:flex; align-items:center; justify-content:center; color:#7a4dd6; }
+  .actions { display:flex; gap:4px; opacity:0; }
+  .item:hover .actions { opacity:1; }
+  .abtn { width:24px; height:24px; border-radius:4px; border:1px solid rgba(0,0,0,0.08); background:#fff;
+    display:flex; align-items:center; justify-content:center; color:#555; font-size:11px; }
+  .p-footer { display:flex; justify-content:space-between; align-items:center; padding:8px 14px;
+    border-top:1px solid rgba(0,0,0,0.07); font-size:10.5px; color:#8a8a8a; }
+  .kbd { border:1px solid #bbb; border-bottom-width:2px; border-radius:4px; padding:0 5px; font-size:10px; color:#555; background:#fff; }
+
+  /* ---------- 主窗口 ---------- */
+  .win { width:760px; height:520px; border-radius:10px; overflow:hidden; position:relative; display:flex; flex-direction:column;
+    background:rgba(249,249,249,0.92); backdrop-filter:blur(30px);
+    box-shadow:0 16px 48px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06); }
+  .titlebar { height:38px; display:flex; align-items:center; gap:10px; padding:0 14px; }
+  .titlebar .logo { width:16px; height:16px; border-radius:4px; background:linear-gradient(135deg,#0067c0,#7a4dd6); }
+  .titlebar span { font-size:12px; color:#333; }
+  .titlebar .cap { margin-left:auto; display:flex; gap:18px; color:#888; font-size:11px; }
+  .win-body { flex:1; display:flex; }
+  .nav { width:190px; padding:8px 10px; border-right:1px solid rgba(0,0,0,0.06); }
+  .nav a { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:6px; font-size:12.5px; color:#333; margin-bottom:2px; }
+  .nav a.active { background:rgba(0,0,0,0.055); font-weight:600; }
+  .nav a.active::before{ content:""; position:absolute; }
+  .nav .ind { width:3px; height:16px; border-radius:2px; background:#0067c0; margin-right:-6px; }
+  .nav .spacer{ height:1px; background:rgba(0,0,0,0.08); margin:10px 12px; }
+  .content { flex:1; padding:18px 24px; overflow:auto; }
+  .content h1 { font-size:17px; color:#1a1a1a; margin-bottom:14px; }
+  .card { background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.06); border-radius:8px; padding:14px 16px; margin-bottom:12px; }
+  .setrow { display:flex; align-items:center; justify-content:space-between; padding:7px 0; }
+  .setrow + .setrow { border-top:1px solid rgba(0,0,0,0.05); }
+  .setrow .l { font-size:12.5px; color:#1a1a1a; font-weight:600; }
+  .setrow .d { font-size:11px; color:#8a8a8a; margin-top:2px; max-width:360px; line-height:1.4; }
+  .toggle { width:40px; height:20px; border-radius:10px; background:#8a8a8a; position:relative; flex:none; }
+  .toggle.on { background:#0067c0; }
+  .toggle::after { content:""; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:#fff; transition:.15s; }
+  .toggle.on::after { left:23px; }
+  .toggle.dark{ background:#0067c0; } .toggle.dark::after{ left:23px; }
+  select, .hotkey { font-size:12px; padding:5px 10px; border-radius:5px; border:1px solid rgba(0,0,0,0.12); background:#fff; color:#333; }
+  .hotkey { min-width:130px; text-align:center; font-family:Consolas,monospace; }
+  .expander{ border:1px solid rgba(0,0,0,0.06); border-radius:6px; margin-bottom:8px; background:rgba(255,255,255,0.7); }
+  .expander .head{ display:flex; align-items:center; justify-content:space-between; padding:9px 14px; font-size:12.5px; color:#1a1a1a; font-weight:600; }
+  .expander .body{ padding:0 14px 12px; font-size:11.5px; color:#666; }
+  .btn { display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 14px; border-radius:5px;
+    background:#fff; border:1px solid rgba(0,0,0,0.12); color:#1a1a1a; }
+  .btn.accent { background:#0067c0; border-color:#0067c0; color:#fff; }
+  .btn.danger { color:#c42b1c; }
+  .list-demo .item { margin:0; }
+  .stat { display:flex; gap:10px; margin-bottom:14px; }
+  .stat .s { flex:1; background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.06); border-radius:8px; padding:10px 14px; }
+  .stat .n { font-size:18px; font-weight:700; color:#0067c0; }
+  .stat .t { font-size:11px; color:#8a8a8a; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<h2 class="cap">① 轻量弹出面板（Ctrl+Shift+V 唤出，跟随鼠标）</h2>
+<div class="frame" style="width:500px">
+  <div class="panel">
+    <div class="p-search">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#666" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <input placeholder="搜索剪贴板历史…">
+    </div>
+    <div class="p-hint"><span><b>Enter</b> 粘贴选中项</span><span><b>↑↓</b> 选择 · <b>Esc</b> 关闭</span></div>
+
+    <div class="sec-title">📌 已置顶</div>
+    <div class="item sel">
+      <div class="ic pin">★</div>
+      <div class="body">
+        <div class="txt">Pasty 剪切板管理器 v1.0 — 让每一次复制都触手可及</div>
+        <div class="meta"><span>2 小时前</span><span class="tag">置顶</span><span class="tag blue">已用 23 次</span></div>
+      </div>
+      <div class="actions"><div class="abtn">✎</div><div class="abtn">★</div><div class="abtn">🗑</div></div>
+    </div>
+
+    <div class="sec-title">最近</div>
+    <div class="item">
+      <div class="ic text">T</div>
+      <div class="body">
+        <div class="txt">会议纪要：Q3 复盘会定于下周三 14:00 在 A 栋 3 楼会议室举行，请各位提前准备数据…</div>
+        <div class="meta"><span>5 分钟前</span><span class="tag">312 字符</span></div>
+      </div>
+      <div class="actions"><div class="abtn">✎</div><div class="abtn">☆</div><div class="abtn">🗑</div></div>
+    </div>
+    <div class="item">
+      <div class="ic text">T</div>
+      <div class="body">
+        <div class="txt">git rebase -i HEAD~3 &amp;&amp; git push --force-with-lease origin main</div>
+        <div class="meta"><span>18 分钟前</span><span class="tag">命令</span></div>
+      </div>
+      <div class="actions"><div class="abtn">✎</div><div class="abtn">☆</div><div class="abtn">🗑</div></div>
+    </div>
+    <div class="item">
+      <div class="ic img">▣</div>
+      <div class="body">
+        <div class="thumb">🖼 图片截图 · 1280 × 720</div>
+        <div class="meta"><span>1 小时前</span><span class="tag">PNG · 86 KB</span></div>
+      </div>
+      <div class="actions"><div class="abtn">☆</div><div class="abtn">🗑</div></div>
+    </div>
+    <div class="item">
+      <div class="ic text">T</div>
+      <div class="body">
+        <div class="txt">https://learn.microsoft.com/windows/apps/winui/winui3/</div>
+        <div class="meta"><span>昨天 22:14</span><span class="tag">链接 · 7 天后过期</span></div>
+      </div>
+      <div class="actions"><div class="abtn">✎</div><div class="abtn">☆</div><div class="abtn">🗑</div></div>
+    </div>
+
+    <div class="p-footer">
+      <span>共 128 条历史 · 3 条置顶</span>
+      <span><span class="kbd">Ctrl+V</span> 粘贴第一条（覆盖模式已开启）</span>
+    </div>
+  </div>
+</div>
+
+<h2 class="cap">② 主窗口 — 历史记录 + 全文预览（快捷键唤出的同一界面）</h2>
+<div class="frame" style="width:1220px; display:flex; gap:36px">
+  <div class="win" style="width:800px; height:500px">
+    <div class="titlebar"><div class="logo"></div><span>Pasty</span><div class="cap"><span style="color:#666">🌙 深色</span><span style="color:#666">⚙ 设置</span><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="win-body">
+      <div class="content" style="padding:8px 10px; width:330px; flex:none">
+        <div class="p-search" style="margin:4px 4px 8px">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#666" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+          <input placeholder="搜索剪贴板历史…">
+        </div>
+        <div class="list-demo">
+          <div class="sec-title" style="padding-left:8px">📌 已置顶</div>
+          <div class="item"><div class="ic pin">★</div><div class="body"><div class="txt">Pasty 剪切板管理器 v1.0</div><div class="meta"><span class="tag">置顶</span><span class="tag blue">已用 23 次</span></div></div><div class="actions"><div class="abtn">✎</div><div class="abtn">★</div><div class="abtn">🗑</div></div></div>
+          <div class="sec-title" style="padding-left:8px">最近</div>
+          <div class="item sel"><div class="ic text">T</div><div class="body"><div class="txt">会议纪要：Q3 复盘会定于下周三…</div><div class="meta"><span>5 分钟前</span><span class="tag">312 字符</span></div></div><div class="actions"><div class="abtn">✎</div><div class="abtn">☆</div><div class="abtn">🗑</div></div></div>
+          <div class="item"><div class="ic text">T</div><div class="body"><div class="txt">git rebase -i HEAD~3</div><div class="meta"><span>18 分钟前</span><span class="tag">命令</span></div></div><div class="actions"><div class="abtn">✎</div><div class="abtn">☆</div><div class="abtn">🗑</div></div></div>
+          <div class="item"><div class="ic img">▣</div><div class="body"><div class="thumb" style="height:44px">🖼 截图 · 1280 × 720</div><div class="meta"><span>1 小时前</span><span class="tag">PNG · 86 KB</span></div></div><div class="actions"><div class="abtn">☆</div><div class="abtn">🗑</div></div></div>
+        </div>
+      </div>
+      <div style="width:1px; background:rgba(0,0,0,0.07); margin:14px 0;"></div>
+      <div class="content" style="padding:14px 18px; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="font-size:13px; font-weight:700; color:#1a1a1a;">全文预览</div>
+          <div style="display:flex; gap:6px;">
+            <div class="btn" style="font-size:11px; padding:4px 10px;">📋 复制</div>
+            <div class="btn accent" style="font-size:11px; padding:4px 10px;">📌 粘贴</div>
+          </div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,0.75); border:1px solid rgba(0,0,0,0.07); border-radius:8px; padding:12px 14px; overflow:auto; font-size:12px; color:#1a1a1a; line-height:1.7;">
+          <b>Q3 复盘会议纪要</b><br><br>
+          时间：下周三 14:00<br>
+          地点：A 栋 3 楼会议室<br>
+          参会：产品组、研发组全体<br><br>
+          议程：<br>
+          1. Q3 目标达成情况回顾（数据由各组负责人提前准备，周二下班前发群内）；<br>
+          2. 未完成事项的原因分析与改进措施；<br>
+          3. Q4 关键目标对齐与资源排期；<br>
+          4. 自由讨论。<br><br>
+          备注：会议预计 90 分钟，请准时参加。线上会议链接将提前 10 分钟发至群内，异地同事可通过链接参会。<br><br>
+          —— 会议组织者：PMO 王琳
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:10.5px; color:#8a8a8a;">
+          <span>复制于 5 分钟前 · 312 字符 · 纯文本</span>
+          <span style="color:#0067c0; font-weight:600;">✎ 编辑内容</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="win" style="width:360px; height:500px">
+    <div class="titlebar"><div class="logo"></div><span>Pasty — 设置</span><div class="cap"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="win-body">
+      <div class="content" style="padding:12px 14px">
+        <div class="card">
+          <div class="setrow">
+            <div><div class="l">保存时长</div><div class="d">超过时长的未置顶历史将自动删除，置顶项不受影响</div></div>
+            <select><option>永久保存</option><option selected>30 天</option><option>90 天</option></select>
+          </div>
+          <div class="setrow">
+            <div><div class="l">最大条数</div><div class="d">历史数量上限</div></div>
+            <select><option>100</option><option selected>500</option><option>1000</option></select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="setrow">
+            <div><div class="l">唤出面板快捷键</div><div class="d">随时唤出剪贴板历史面板</div></div>
+            <div class="hotkey">Ctrl + Shift + V</div>
+          </div>
+          <div class="setrow">
+            <div><div class="l">粘贴第一条快捷键</div><div class="d">无需打开面板，直接粘贴最近一条</div></div>
+            <div class="hotkey">Ctrl + Alt + V</div>
+          </div>
+          <div class="setrow">
+            <div><div class="l">覆盖系统 Ctrl+V</div><div class="d">开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴</div></div>
+            <div class="toggle on"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="setrow">
+            <div><div class="l">开机自动启动</div><div class="d">登录 Windows 后在后台运行</div></div>
+            <div class="toggle"></div>
+          </div>
+          <div class="setrow">
+            <div><div class="l">跟随系统主题</div><div class="d">浅色 / 深色 / 跟随系统</div></div>
+            <select><option selected>跟随系统</option><option>浅色</option><option>深色</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<style>
+  .darkpanel { background:rgba(32,32,32,0.92); }
+  .darkpanel .p-search { background:#2d2d2d; border-color:rgba(255,255,255,0.08); border-bottom-color:#4cc2ff; }
+  .darkpanel .p-search input { color:#fff; }
+  .darkpanel .p-hint, .darkpanel .p-footer, .darkpanel .meta { color:#9a9a9a; }
+  .darkpanel .p-hint b, .darkpanel .sec-title { color:#c9c9c9; }
+  .darkpanel .sec-title { color:#c9c9c9; }
+  .darkpanel .item:hover { background:rgba(255,255,255,0.06); }
+  .darkpanel .item.sel { background:#2e4d6b; outline-color:rgba(76,194,255,0.4); }
+  .darkpanel .txt { color:#f2f2f2; }
+  .darkpanel .txt code { background:rgba(255,255,255,0.08); }
+  .darkpanel .tag { background:rgba(255,255,255,0.09); color:#bbb; }
+  .darkpanel .tag.blue { background:#1f3a56; color:#7ec2f5; }
+  .darkpanel .ic.text { background:#1f2c3d; color:#7ec2f5; }
+  .darkpanel .ic.img { background:#33294d; color:#b79bf0; }
+  .darkpanel .ic.pin { background:#443a1e; color:#f0c04a; }
+  .darkpanel .p-footer { border-top-color:rgba(255,255,255,0.08); }
+  .darkpanel .abtn { background:#2d2d2d; border-color:rgba(255,255,255,0.1); color:#ccc; }
+  .darkpanel .kbd { background:#2d2d2d; border-color:#555; color:#ccc; }
+  .darkpanel .thumb { background:repeating-conic-gradient(#3a3352 0% 25%, #2c2740 0% 50%) 0 0/24px 24px; color:#b79bf0; }
+</style>
+
+<h2 class="cap">③ 深色模式（主窗口标题栏一键切换 / 设置页可选 跟随系统）</h2>
+<div class="frame" style="width:500px; background:linear-gradient(135deg,#3a3f4b 0%,#453f55 50%,#3c4a46 100%)">
+  <div class="panel darkpanel">
+    <div class="p-search">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#999" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <input placeholder="搜索剪贴板历史…">
+    </div>
+    <div class="p-hint"><span><b>Enter</b> 粘贴选中项</span><span><b>↑↓</b> 选择 · <b>Esc</b> 关闭</span></div>
+    <div class="sec-title">📌 已置顶</div>
+    <div class="item sel">
+      <div class="ic pin">★</div>
+      <div class="body">
+        <div class="txt">Pasty 剪切板管理器 v1.0 — 让每一次复制都触手可及</div>
+        <div class="meta"><span>2 小时前</span><span class="tag">置顶</span><span class="tag blue">已用 23 次</span></div>
+      </div>
+    </div>
+    <div class="sec-title">最近</div>
+    <div class="item">
+      <div class="ic text">T</div>
+      <div class="body">
+        <div class="txt">会议纪要：Q3 复盘会定于下周三 14:00 在 A 栋 3 楼会议室举行…</div>
+        <div class="meta"><span>5 分钟前</span><span class="tag">312 字符</span></div>
+      </div>
+    </div>
+    <div class="item">
+      <div class="ic img">▣</div>
+      <div class="body">
+        <div class="thumb">🖼 图片截图 · 1280 × 720</div>
+        <div class="meta"><span>1 小时前</span><span class="tag">PNG · 86 KB</span></div>
+      </div>
+    </div>
+    <div class="p-footer">
+      <span>共 128 条历史 · 3 条置顶</span>
+      <span><span class="kbd">Ctrl+V</span> 粘贴第一条（覆盖模式已开启）</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

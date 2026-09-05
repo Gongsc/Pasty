@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Pasty.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="44" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid x:Name="AppTitleBar" Background="Transparent">
+                <StackPanel Orientation="Horizontal" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="Pasty — 设置" FontSize="12" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Padding="20,8,20,20">
+            <StackPanel MaxWidth="560" HorizontalAlignment="Left" Spacing="12">
+
+                <TextBlock Text="历史记录" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,0" />
+                <Border CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="16,10">
+                    <StackPanel>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="保存时长" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="超过时长的未置顶历史将自动删除，置顶项不受影响" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox x:Name="RetentionCombo" SelectionChanged="Retention_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                                <ComboBoxItem Content="永久保存" Tag="0" />
+                                <ComboBoxItem Content="7 天" Tag="7" />
+                                <ComboBoxItem Content="30 天" Tag="30" />
+                                <ComboBoxItem Content="90 天" Tag="90" />
+                                <ComboBoxItem Content="365 天" Tag="365" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="最大条数" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="历史数量上限，超出时淘汰最旧的未置顶项" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox x:Name="MaxItemsCombo" SelectionChanged="MaxItems_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                                <ComboBoxItem Content="100" Tag="100" />
+                                <ComboBoxItem Content="500" Tag="500" />
+                                <ComboBoxItem Content="1000" Tag="1000" />
+                                <ComboBoxItem Content="2000" Tag="2000" />
+                            </ComboBox>
+                        </Grid>
+                        <Button x:Name="ClearButton" Click="Clear_Click" Margin="0,10,0,4" Content="清空全部历史" />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="快捷键" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,0" />
+                <Border CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="16,10">
+                    <StackPanel>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="唤出面板快捷键" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="随时唤出剪贴板历史面板" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox x:Name="ShowHotkeyCombo" SelectionChanged="ShowHotkey_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="170" />
+                        </Grid>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="粘贴第一条快捷键" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="无需打开面板，直接把最近一条粘贴到当前窗口" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox x:Name="PasteHotkeyCombo" SelectionChanged="PasteHotkey_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="170" />
+                        </Grid>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="覆盖系统 Ctrl+V" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="OverrideToggle" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="应用" FontSize="16" FontWeight="SemiBold" Margin="0,8,0,0" />
+                <Border CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Padding="16,10">
+                    <StackPanel>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="开机自动启动" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="登录 Windows 后在后台运行" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="StartupToggle" Toggled="Startup_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                        </Grid>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="主题" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ComboBox x:Name="ThemeCombo" SelectionChanged="Theme_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                                <ComboBoxItem Content="跟随系统" Tag="0" />
+                                <ComboBoxItem Content="浅色" Tag="1" />
+                                <ComboBoxItem Content="深色" Tag="2" />
+                            </ComboBox>
+                        </Grid>
+                        <Grid Padding="0,6" ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="面板失焦自动隐藏" FontSize="13" FontWeight="SemiBold" />
+                                <TextBlock Text="快捷键唤出的面板在切换到其他窗口时自动隐藏" FontSize="11.5" Opacity="0.6" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch x:Name="HideOnDeactivateToggle" Toggled="HideOnDeactivate_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>
