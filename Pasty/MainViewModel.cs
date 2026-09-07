@@ -20,6 +20,15 @@ public class MainViewModel
     public ClipItem? TopItem =>
         StorageService.Items.FirstOrDefault();
 
+    /// <summary>历史总条数，不受搜索过滤影响。空状态文案与“清空”按钮的可用性都要看它。</summary>
+    public int TotalCount => All.Count;
+
+    /// <summary>已置顶条数。清空确认框要如实说明会连置顶项一起删掉多少条。</summary>
+    public int PinnedCount => All.Count(i => i.IsPinned);
+
+    /// <summary>当前搜索词。空列表要区分“一条历史都没有”和“搜索没命中”，文案不一样。</summary>
+    public string Filter => _filter;
+
     public Task LoadFromStorageAsync()
     {
         RebuildGroups();

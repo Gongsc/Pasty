@@ -2,6 +2,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Pasty.Models;
 using Pasty.Services;
+using Windows.Graphics;
+using WinRT.Interop;
 
 namespace Pasty.Views;
 
@@ -25,15 +27,17 @@ public sealed partial class SettingsWindow : Window
     };
 
     private bool _loading = true;
+    private readonly IntPtr _hwnd;
 
     public SettingsWindow()
     {
         InitializeComponent();
+        _hwnd = WindowNative.GetWindowHandle(this);
         Title = "Pasty — 设置";
         ExtendsContentIntoTitleBar = true;
         AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
-        AppWindow.Resize(new Windows.Graphics.SizeInt32(640, 780));
+        AppWindow.Resize(Scaled(640, 780));
 
         _loading = true;
         SelectByTag(RetentionCombo, App.Settings.RetentionDays);
@@ -52,9 +56,15 @@ public sealed partial class SettingsWindow : Window
 
         UpdateHotkeyWarning();
         App.Hotkeys.RegistrationChanged += UpdateHotkeyWarning;
+        UpdateClearButton();
+        App.ViewModel.GroupsChanged += UpdateClearButton;
         // 设置窗口每次打开都是新实例，不退订的话旧实例会一直挂在事件上，
-        // 下次注册失败时对着已关闭窗口的控件写字
-        Closed += (s, e) => App.Hotkeys.RegistrationChanged -= UpdateHotkeyWarning;
+        // 下次注册失败（或下次列表变动）时对着已关闭窗口的控件写字
+        Closed += (s, e) =>
+        {
+            App.Hotkeys.RegistrationChanged -= UpdateHotkeyWarning;
+            App.ViewModel.GroupsChanged -= UpdateClearButton;
+        };
     }
 
     /// <summary>
@@ -66,6 +76,21 @@ public sealed partial class SettingsWindow : Window
         var errors = App.Hotkeys.RegistrationErrors;
         HotkeyWarning.Message = string.Join("\n", errors);
         HotkeyWarning.IsOpen = errors.Count > 0;
+    }
+
+    /// <summary>历史为空时“清空全部历史”没有任何事可做，置灰比点了没反应清楚。</summary>
+    private void UpdateClearButton() => ClearButton.IsEnabled = App.ViewModel.TotalCount > 0;
+
+    /// <summary>
+    /// 把逻辑尺寸换算成当前显示器的物理像素。AppWindow.Resize 收的是物理像素，
+    /// 以前直接传 640×780，在 150% 缩放下窗口只有 427×520 逻辑像素，
+    /// 右侧的下拉框和开关会被挤出可见区域。
+    /// </summary>
+    private SizeInt32 Scaled(int width, int height)
+    {
+        var scale = Win32.GetDpiForWindow(_hwnd) / 96.0;
+        if (scale <= 0) scale = 1;
+        return new SizeInt32((int)Math.Round(width * scale), (int)Math.Round(height * scale));
     }
 
     public void ApplyTheme(ElementTheme theme) => RootGrid.RequestedTheme = theme;
@@ -159,11 +184,22 @@ public sealed partial class SettingsWindow : Window
 
     private async void Clear_Click(object sender, RoutedEventArgs e)
     {
+        var total = App.ViewModel.TotalCount;
+        var pinned = App.ViewModel.PinnedCount;
+        if (total == 0) return;
+
+        var detail = pinned > 0
+            ? $"将删除全部 {total} 条记录，其中 {pinned} 条已置顶，且无法恢复。"
+            : $"将删除全部 {total} 条记录，且无法恢复。";
+
         var dialog = new ContentDialog
         {
             XamlRoot = RootGrid.XamlRoot,
+            // 对话框挂在 XamlRoot 的弹出层上，不在 RootGrid 之下，
+            // 不显式带上主题就会用应用主题渲染——手动切到深色时弹出一个白框
+            RequestedTheme = RootGrid.RequestedTheme,
             Title = "清空全部历史？",
-            Content = "所有未置顶与已置顶的剪贴板记录都将被删除，且无法恢复。",
+            Content = detail,
             PrimaryButtonText = "清空",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,

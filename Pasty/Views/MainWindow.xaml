@@ -24,7 +24,8 @@
             <Grid x:Name="AppTitleBar" Background="Transparent">
                 <StackPanel Orientation="Horizontal" Margin="14,0,0,0" Spacing="10" VerticalAlignment="Center">
                     <!-- 与托盘/16px 应用图标同一套几何（L3，64 单位网格，见 tools/IconGen/Art.cs）。
-                         Viewbox 取 22 而不是 18：图形只占网格的 48×52，这样实际显示出来才接近 18px。 -->
+                         Viewbox 取 22 而不是 18：图形只占网格的 48×52，这样实际显示出来才接近 18px。
+                         这三个色值是品牌标记本身、不随主题变，所以刻意不走 ThemeResource。 -->
                     <Viewbox Width="22" Height="22">
                         <Canvas Width="64" Height="64">
                             <Rectangle Canvas.Left="8" Canvas.Top="8" Width="48" Height="48"
@@ -38,8 +39,12 @@
                     <TextBlock Text="Pasty" FontSize="12" VerticalAlignment="Center" />
                 </StackPanel>
             </Grid>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" Margin="0,0,138,0" VerticalAlignment="Center">
-                <Button x:Name="ThemeButton" Click="ThemeButton_Click" Background="Transparent" BorderThickness="0" Padding="8">
+            <!-- 右边距由 UpdateCaptionInset() 按 AppWindow.TitleBar.RightInset 实算，
+                 这里的 138 只是首次布局完成前的兜底值 -->
+            <StackPanel x:Name="TitleBarActions" Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                        Margin="0,0,138,0" VerticalAlignment="Center">
+                <Button x:Name="ThemeButton" Click="ThemeButton_Click" Background="Transparent" BorderThickness="0" Padding="8"
+                        AutomationProperties.Name="切换亮色 / 深色">
                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE793;" FontSize="14" />
                     <ToolTipService.ToolTip>
                         <ToolTip Content="切换亮色 / 深色" />
@@ -54,12 +59,12 @@
             </StackPanel>
         </Grid>
 
-        <!-- 主体：左列表 + 右预览 -->
+        <!-- 主体：左列表 + 右预览。面板形态下预览整列折叠，见 SetPreviewVisible() -->
         <Grid Grid.Row="1" Padding="10,4,10,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="340" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="ListColumn" Width="340" />
+                <ColumnDefinition x:Name="DividerColumn" Width="Auto" />
+                <ColumnDefinition x:Name="PreviewColumn" Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- 历史列表 -->
@@ -68,41 +73,80 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBox x:Name="SearchBox" Margin="0,4,0,8" PlaceholderText="搜索剪贴板历史…" TextChanged="SearchBox_TextChanged" />
+                <TextBox x:Name="SearchBox" Margin="0,4,0,8" PlaceholderText="搜索剪贴板历史…"
+                         AutomationProperties.Name="搜索剪贴板历史" TextChanged="SearchBox_TextChanged" />
                 <ListView
                     x:Name="ItemsList" Grid.Row="1"
                     Margin="0,0,0,6"
                     SelectionMode="Single"
+                    AutomationProperties.Name="剪贴板历史"
                     SelectionChanged="ItemsList_SelectionChanged"
                     DoubleTapped="ItemsList_DoubleTapped">
                     <ListView.Resources>
+                        <!-- 行圆角。平台默认是 4，这里保持原设计的 6；
+                             覆盖这个键比自己整段替换 ControlTemplate 安全得多 -->
+                        <CornerRadius x:Key="ListViewItemCornerRadius">6</CornerRadius>
                         <DataTemplate x:Key="HeaderTemplate" x:DataType="models:HeaderRow">
                             <TextBlock Text="{x:Bind Title}" FontSize="12" FontWeight="SemiBold"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="4,10,0,4" />
                         </DataTemplate>
                         <DataTemplate x:Key="ClipItemTemplate" x:DataType="models:ClipItem">
-                            <Grid Margin="8,5" MinHeight="36">
+                            <!-- 这里的绑定都是默认的 OneTime。ClipItem 没有实现 INotifyPropertyChanged，
+                                 写 Mode=OneWay 也收不到任何通知，只会让人误以为它会自动刷新。
+                                 真正的刷新靠 MainWindow.UpdateGroups() 整体重建 _rows
+                                 （置顶/编辑/删除/清理都会走到），容器复用时模板会重新求值。 -->
+                            <Grid Margin="0,5" MinHeight="36">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <Border x:Name="TypeIcon" Width="28" Height="28" CornerRadius="5" VerticalAlignment="Top">
-                                    <TextBlock x:Name="TypeIconText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" />
-                                </Border>
+                                <!-- 类型标记。两套配色以前是在 ContainerContentChanging 里用
+                                     Application.Current.Resources 查出来直接赋值的，而那个字典解析的是
+                                     “应用”主题，绕过了本窗口的 RootGrid.RequestedTheme——手动切主题时
+                                     标记颜色不跟着变。现在两个 Border 都写在 XAML 里走 ThemeResource，
+                                     只由 Visibility 决定露哪一个。 -->
+                                <Grid Width="28" Height="28" VerticalAlignment="Top">
+                                    <Border CornerRadius="5" Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                            Visibility="{x:Bind local:MainWindow.TextChipVisibility(Type)}">
+                                        <TextBlock Text="T" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                    </Border>
+                                    <Border CornerRadius="5" Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
+                                            Visibility="{x:Bind local:MainWindow.ImageChipVisibility(Type)}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8B9;"
+                                                  FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    </Border>
+                                </Grid>
                                 <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Top">
-                                    <TextBlock Text="{x:Bind PreviewText, Mode=OneWay}" FontSize="12.5" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{x:Bind MetaText, Mode=OneWay}" FontSize="10.5" Opacity="0.55" Margin="0,3,0,0" />
+                                    <TextBlock Text="{x:Bind PreviewText}" FontSize="12.5" TextWrapping="Wrap"
+                                               MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{x:Bind MetaText}" FontSize="10.5" Margin="0,3,0,0"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top" Opacity="0.7">
-                                    <Button x:Name="EditButton" Click="EditItem_Click" Tag="{x:Bind}" Padding="5" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="编辑内容">
-                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="12" />
+                                <!-- 图标按钮的可访问名不能指望 ToolTip：ToolTipService.ToolTip 不会写
+                                     AutomationProperties.Name，读屏软件念出来的是 FontIcon 里那个私用区字符。
+                                     整组按钮原先用 Opacity=0.7 压暗，高对比度主题下 Opacity 照样生效，
+                                     会把系统保证的对比度打掉，所以改成按图标取次级前景色。 -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
+                                    <Button x:Name="EditButton" Click="EditItem_Click" Tag="{x:Bind}" Padding="5"
+                                            Background="Transparent" BorderThickness="0"
+                                            AutomationProperties.Name="编辑内容" ToolTipService.ToolTip="编辑内容">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="12"
+                                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
-                                    <Button x:Name="PinButton" Click="PinItem_Click" Tag="{x:Bind}" Padding="5" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="置顶 / 取消置顶">
-                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{x:Bind PinGlyph, Mode=OneWay}" FontSize="12" />
+                                    <Button x:Name="PinButton" Click="PinItem_Click" Tag="{x:Bind}" Padding="5"
+                                            Background="Transparent" BorderThickness="0"
+                                            AutomationProperties.Name="置顶 / 取消置顶" ToolTipService.ToolTip="置顶 / 取消置顶">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{x:Bind PinGlyph}" FontSize="12"
+                                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
-                                    <Button x:Name="DeleteButton" Click="DeleteItem_Click" Tag="{x:Bind}" Padding="5" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="删除">
-                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74D;" FontSize="12" />
+                                    <Button x:Name="DeleteButton" Click="DeleteItem_Click" Tag="{x:Bind}" Padding="5"
+                                            Background="Transparent" BorderThickness="0"
+                                            AutomationProperties.Name="删除" ToolTipService.ToolTip="删除">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74D;" FontSize="12"
+                                                  Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
                                 </StackPanel>
                             </Grid>
@@ -111,48 +155,40 @@
                                                    HeaderTemplate="{StaticResource HeaderTemplate}"
                                                    ItemTemplate="{StaticResource ClipItemTemplate}" />
                     </ListView.Resources>
-                    <ListView.ItemContainerStyle>
-                        <Style TargetType="ListViewItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="MinHeight" Value="44" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListViewItem">
-                                        <ListViewItemPresenter
-                                            ContentMargin="2,1,16,1"
-                                            ContentTransitions="{TemplateBinding ContentTransitions}"
-                                            SelectionCheckMarkVisualEnabled="False"
-                                            PointerOverBackground="{ThemeResource SystemControlHighlightListLowBrush}"
-                                            PointerOverForeground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            SelectedBackground="{ThemeResource SystemControlHighlightListAccentLowBrush}"
-                                            SelectedPointerOverBackground="{ThemeResource SystemControlHighlightListAccentMediumLowBrush}"
-                                            PressedBackground="{ThemeResource SystemControlHighlightListMediumBrush}"
-                                            SelectedPressedBackground="{ThemeResource SystemControlHighlightListAccentMediumLowBrush}"
-                                            FocusVisualMargin="-3,0,-3,0"
-                                            CornerRadius="6" />
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListView.ItemContainerStyle>
+                    <!-- 这里原先整段替换了 ListViewItem 的 ControlTemplate，笔刷还是 WinUI 2 时代的
+                         SystemControlHighlight*：既丢掉了选中指示条与焦点框，也没有高对比度主题下的取色。
+                         平台默认模板本身就把 HorizontalContentAlignment=Stretch 和各状态做好了，
+                         行高由模板内 Grid 的 MinHeight + Margin 决定，因此这里不需要覆盖任何东西。 -->
                     <ListView.ItemTemplateSelector>
                         <StaticResource ResourceKey="RowSelector" />
                     </ListView.ItemTemplateSelector>
                 </ListView>
+                <!-- 空列表提示。以前“最近”这个分组标题是无条件加上的，
+                     一条历史都没有时界面上只剩一个孤零零的标题，看着像卡在加载中。 -->
+                <TextBlock x:Name="ListEmptyHint" Grid.Row="1" Visibility="Collapsed"
+                           FontSize="12" TextWrapping="Wrap" TextAlignment="Center"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                           Margin="16,48,16,0" HorizontalAlignment="Center" VerticalAlignment="Top" />
             </Grid>
 
-            <Border Grid.Column="1" Width="1" Margin="10,6" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-
+            <Border x:Name="PreviewDivider" Grid.Column="1" Width="1" Margin="10,6"
+                    Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             <!-- 全文预览 -->
-                <Grid Grid.Column="2" Margin="4,6,0,0" x:Name="PreviewArea">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                <Grid>
+            <Grid Grid.Column="2" Margin="4,6,0,0" x:Name="PreviewArea">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <!-- 标题与按钮组分列，别挤在同一格里靠对齐方式错开：
+                     标题变长（编辑态是“编辑内容”）时会直接压到按钮下面 -->
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock x:Name="PreviewTitle" Text="全文预览" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" x:Name="PreviewActions">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="PreviewActions">
                         <Button x:Name="CopyButton" Click="CopyPreview_Click">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8C8;" FontSize="13" />
@@ -172,7 +208,7 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" x:Name="EditActions" Visibility="Collapsed">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="EditActions" Visibility="Collapsed">
                         <Button x:Name="SaveEditButton" Click="SaveEdit_Click" Style="{StaticResource AccentButtonStyle}">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE73E;" FontSize="13" />
@@ -187,29 +223,37 @@
                         </Button>
                     </StackPanel>
                 </Grid>
-
+                <!-- 卡片直接铺满这一行。以前是 VerticalAlignment=Top 再由 code-behind 的
+                     SizeChanged 算 MaxHeight，等于用一段代码复刻 Grid 本来就会做的事，
+                     而且预览内容短时卡片会缩成一条、下面留一大片空地。 -->
                 <Border Grid.Row="1" x:Name="PreviewCard" Margin="0,10,0,0" CornerRadius="10" BorderThickness="1"
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        Padding="16,12,6,12" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                        Padding="16,12,6,12" HorizontalAlignment="Stretch">
                     <Grid>
                         <ScrollViewer x:Name="TextPreviewHost" VerticalScrollBarVisibility="Auto">
-                            <TextBlock x:Name="PreviewTextBlock" TextWrapping="Wrap" FontSize="13" LineHeight="22" IsTextSelectionEnabled="True" Margin="0,0,10,2" />
+                            <TextBlock x:Name="PreviewTextBlock" TextWrapping="Wrap" FontSize="13" LineHeight="22"
+                                       IsTextSelectionEnabled="True" Margin="0,0,10,2" />
                         </ScrollViewer>
-                        <ScrollViewer x:Name="ImagePreviewHost" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <Image x:Name="PreviewImage" Stretch="Uniform" MaxHeight="640" Margin="0,0,10,2" />
+                        <ScrollViewer x:Name="ImagePreviewHost" Visibility="Collapsed"
+                                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <Image x:Name="PreviewImage" Stretch="Uniform" MaxHeight="640" Margin="0,0,10,2"
+                                   AutomationProperties.Name="图片预览" />
                         </ScrollViewer>
                         <ScrollViewer x:Name="EditHost" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" MinHeight="200">
                             <TextBox x:Name="PreviewEditBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="13"
                                      IsSpellCheckEnabled="False" BorderThickness="0" Background="Transparent"
+                                     AutomationProperties.Name="编辑剪贴板内容"
                                      Margin="0,0,10,2" MinHeight="200" />
                         </ScrollViewer>
-                        <TextBlock x:Name="EmptyHint" Text="选择左侧条目查看完整内容" Opacity="0.5" FontSize="12" Margin="10,0,10,0"
+                        <TextBlock x:Name="EmptyHint" Text="选择左侧条目查看完整内容" FontSize="12" Margin="10,0,10,0"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
                 </Border>
 
-                <TextBlock x:Name="PreviewMeta" Grid.Row="2" Margin="0,8,0,0" FontSize="10.5" Opacity="0.55" />
+                <TextBlock x:Name="PreviewMeta" Grid.Row="2" Margin="0,8,0,0" FontSize="10.5"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
             </Grid>
         </Grid>
     </Grid>
