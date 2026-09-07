@@ -35,15 +35,18 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 所有增删改必须走 `MainViewModel` 的方法（它们负责重建分组并调用 `StorageService.Save()`）；直接改 `StorageService.Items` 会让 UI 和磁盘都不同步。列表重建会踩掉预览面板的编辑态，`UpdateGroups` 因此专门保存/恢复未提交的文本与光标位置。
 
 ### 落盘：合并队列 + 退出必须显式 Flush
-`Save()` 只登记最新快照并保证全程只有一个后台写入任务（顺序写、`tmp` + `File.Move` 原子替换）。因此**退出路径必须走 `App.Exit()`**：它按 `Hotkeys.Dispose` → 托盘移除 → `StorageService.Flush()`（同步落盘）→ `Trace.Flush()` → `Current.Exit()` 的顺序收尾。直接调 `Application.Current.Exit()` 会丢掉最后一批改动。
+`Save()` 只登记最新快照并保证全程只有一个后台写入任务（顺序写、`tmp` + `File.Move` 原子替换）。因此**退出路径必须走 `App.Exit()`**：它按 `Hotkeys.Dispose` → `ForegroundService.Stop` → 托盘移除 → `StorageService.Flush()`（同步落盘）→ `Trace.Flush()` → `Current.Exit()` 的顺序收尾。直接调 `Application.Current.Exit()` 会丢掉最后一批改动。
 
 ### 粘贴链路（最容易改坏的部分）
 `PasteService.PasteAsync`：置起 `ClipboardMonitor.Suspended` + `HotkeyService.SuppressHookAction` → 写剪贴板 → 延时 → `ForceForeground(target)` → `SendCtrlV()` → finally 延时 200ms 再复位标志。
 
-两条不能违反的约束：
+目标窗口一律经 `ForegroundService.ResolvePasteTarget()` 取，它按两级兜底：先取热键触发时记下的句柄，再取 `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 持续跟踪到的"最近一个外部前台窗口"。
+
+三条不能违反的约束：
 
 - **任何写剪贴板的代码写完后要调 `ClipboardMonitor.MarkSelfWrite()`；什么都没写时绝不能调。** `Suspended` 布尔量单独不够用：`WM_CLIPBOARDUPDATE` 是投递消息，到达时同步段早已把标志复位，真正的过滤靠 `GetClipboardSequenceNumber()` 比较。空写却推进序号会连带吞掉用户的下一次复制。
-- **前台窗口句柄是"取用即清除"的**：只经 `HotkeyService.ConsumeLastForegroundWindow()` 读取，并用 `Win32.IsPasteTarget()` 校验（存活、可见、不属于本进程）。缓存的句柄可能已销毁并被回收给别的进程。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。
+- **粘贴目标绝不能只靠热键那一刻的缓存。** 热键缓存是"取用即清除"的（`HotkeyService.ConsumeLastForegroundWindow()`），只对紧随触发的那一次粘贴有效；留着不清会让几小时前按热键时记下的窗口继续被当成目标，而那个句柄可能已销毁并被回收给别的进程。**鼠标操作（双击条目、点"粘贴"按钮）没有那样的触发时刻可记**，早先因此退回 `GetForegroundWindow()` 拿到 Pasty 自己，`IsPasteTarget` 不通过就只写剪贴板不发按键，用户看到的就是"条目跳到最顶端、目标应用里什么都没出现"。这就是 `ForegroundService` 存在的理由，别把它删了退回单级缓存。
+- **任何候选句柄用之前都要过 `Win32.IsPasteTarget()`**（存活、可见、不属于本进程）。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。`ForegroundService` 的回调跑在 UI 线程的消息泵上，和键盘钩子一样不许做耗时事，只记句柄；它刻意忽略自己的窗口（否则面板一弹出就把目标覆盖成面板自己），并跳过任务栏/桌面这类"不是任何应用"的窗口。
 
 ### 低级键盘钩子的硬约束（`HotkeyService.LowLevelHook`）
 钩子回调在 UI 线程上执行，**同步耗时超过 `LowLevelHooksTimeout`（默认 300ms）系统会静默摘掉钩子**，此后"覆盖 Ctrl+V"永久失效且没有任何报错。所以：回调内不做文件 IO（`Trace` 因此是后台队列写入），动作一律 `_dispatcher.TryEnqueue` 出去。

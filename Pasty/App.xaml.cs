@@ -62,8 +62,11 @@ public partial class App : Application
             await ViewModel.AddOrUpdateAsync(item);
         };
 
-        Hotkeys.PasteTopRequested += () => _ = PasteFirstAsync(useLastForeground: true);
+        Hotkeys.PasteTopRequested += () => _ = PasteFirstAsync();
         Hotkeys.ShowPanelRequested += () => MainWindow.Current?.ShowAsPanel();
+
+        // 前台窗口跟踪要在任何粘贴发生之前起来：双击条目、点“粘贴”按钮都靠它找目标
+        ForegroundService.Start();
 
         await ViewModel.LoadFromStorageAsync();
         _retention.Start();
@@ -99,6 +102,7 @@ public partial class App : Application
     public new static void Exit()
     {
         Hotkeys.Dispose();
+        ForegroundService.Stop();
         TrayIconService.Remove();
         // 落盘必须在 Current.Exit() 之前且是同步的：Save() 走后台队列，
         // 进程一结束队列里的写入就没了，退出前的复制/置顶/编辑会全部丢失
@@ -107,7 +111,7 @@ public partial class App : Application
         Current.Exit();
     }
 
-    public static async Task PasteFirstAsync(bool useLastForeground)
+    public static async Task PasteFirstAsync()
     {
         var item = ViewModel.TopItem;
         if (item == null)
@@ -115,8 +119,7 @@ public partial class App : Application
             Trace.Log("paste-first 无可粘贴条目");
             return;
         }
-        var target = useLastForeground ? HotkeyService.ConsumeLastForegroundWindow() : IntPtr.Zero;
-        if (!Win32.IsPasteTarget(target)) target = Win32.GetForegroundWindow();
+        var target = ForegroundService.ResolvePasteTarget();
         MainWindow.Current?.HideIfPanel();
         // 只记录类型与长度，内容本身绝不落盘：用户复制的往往就是密码和令牌
         Trace.Log($"paste-first 条目={item.Type} 长度={(item.Type == ClipType.Text ? item.Text.Length : 0)}");

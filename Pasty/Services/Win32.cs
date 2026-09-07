@@ -8,6 +8,10 @@ internal static class Win32
     public delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
     public delegate IntPtr KeyboardHookDelegate(int nCode, IntPtr wParam, IntPtr lParam);
 
+    /// <summary>SetWinEventHook 的回调签名（OUT_OFCONTEXT 模式下由安装线程的消息泵驱动）。</summary>
+    public delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd,
+        uint idObject, uint idChild, uint dwEventThread, uint msEventTime);
+
     public const uint WM_CLIPBOARDUPDATE = 0x031D;
     public const uint WM_HOTKEY = 0x0312;
     public const uint WM_APP_TRAY = 0x8100;
@@ -362,6 +366,20 @@ internal static class Win32
         GetClassNameW(info.hwndFocus != IntPtr.Zero ? info.hwndFocus : fg, sb, 256);
         return sb.ToString();
     }
+
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+
+    /// <summary>
+    /// 订阅系统事件（这里只要前台窗口切换）。hModWinEventProc 与 idProcess/idThread 全留默认值
+    /// 表示“全局、所有进程”，OUT_OFCONTEXT 标志表示回调在自己的线程上被调用，不注入别人进程。
+    /// </summary>
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc,
+        WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
+
+    [DllImport("user32.dll")]
+    public static extern bool UnhookWinEvent(IntPtr hWinEventHook);
 }
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]

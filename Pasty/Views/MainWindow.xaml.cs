@@ -387,11 +387,11 @@ public sealed partial class MainWindow : Window
 
     private async Task PasteItemAsync(ClipItem item)
     {
-        // 取用即清除：热键记下的句柄只对紧随其后的这一次粘贴有效。
-        // 拿不到有效句柄就退回当前前台窗口；若那也是 Pasty 自己（从托盘打开的常见情形），
-        // PasteAsync 会只写剪贴板而不发按键，而不是像以前那样整个跳过、按钮看着毫无反应。
-        var target = HotkeyService.ConsumeLastForegroundWindow();
-        if (!Win32.IsPasteTarget(target)) target = Win32.GetForegroundWindow();
+        // 目标窗口的解析见 ForegroundService.ResolvePasteTarget：
+        // 热键唤出的面板有“触发那一刻”可记，而鼠标双击与“粘贴”按钮没有，
+        // 以前只能退回 GetForegroundWindow()——那是 Pasty 自己，校验不通过就只写剪贴板不发按键，
+        // 用户看到的就是“条目跳到了最顶端，目标应用里什么都没出现”
+        var target = ForegroundService.ResolvePasteTarget();
 
         if (_panelMode) HidePanel();
         await PasteService.PasteAsync(item, target);

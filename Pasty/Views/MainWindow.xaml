@@ -189,19 +189,23 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="PreviewTitle" Text="全文预览" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="PreviewActions">
-                        <Button x:Name="CopyButton" Click="CopyPreview_Click">
+                        <!-- 这几个按钮的可访问名必须显式写：内容是 StackPanel（图标 + 文字）而不是一个字符串，
+                             UIA 不会从子孙 TextBlock 里聚合出 Name，读屏软件只能念出个空按钮 -->
+                        <Button x:Name="CopyButton" Click="CopyPreview_Click" AutomationProperties.Name="复制">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8C8;" FontSize="13" />
                                 <TextBlock Text="复制" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="PasteButton" Click="PastePreview_Click" Style="{StaticResource AccentButtonStyle}">
+                        <Button x:Name="PasteButton" Click="PastePreview_Click" Style="{StaticResource AccentButtonStyle}"
+                                AutomationProperties.Name="粘贴">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE77F;" FontSize="13" />
                                 <TextBlock Text="粘贴" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="EditPreviewButton" Click="EditPreview_Click" ToolTipService.ToolTip="编辑文字内容">
+                        <Button x:Name="EditPreviewButton" Click="EditPreview_Click" ToolTipService.ToolTip="编辑文字内容"
+                                AutomationProperties.Name="编辑">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="13" />
                                 <TextBlock Text="编辑" FontSize="12" />
@@ -209,13 +213,14 @@
                         </Button>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="EditActions" Visibility="Collapsed">
-                        <Button x:Name="SaveEditButton" Click="SaveEdit_Click" Style="{StaticResource AccentButtonStyle}">
+                        <Button x:Name="SaveEditButton" Click="SaveEdit_Click" Style="{StaticResource AccentButtonStyle}"
+                                AutomationProperties.Name="保存">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE73E;" FontSize="13" />
                                 <TextBlock Text="保存" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="CancelEditButton" Click="CancelEdit_Click">
+                        <Button x:Name="CancelEditButton" Click="CancelEdit_Click" AutomationProperties.Name="取消">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE711;" FontSize="13" />
                                 <TextBlock Text="取消" FontSize="12" />
