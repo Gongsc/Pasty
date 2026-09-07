@@ -21,6 +21,13 @@ public partial class App : Application
     public static string IconPath { get; } =
         System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Pasty.ico");
 
+    /// <summary>
+    /// 版本号。唯一的真相是 csproj 里的 <c>&lt;Version&gt;</c>，设置页、CI 产物名与 Release 标题都从它派生，
+    /// 不在界面上手写数字——否则改了 csproj 这里忘了改，版本号就成了摆设。
+    /// </summary>
+    public static string Version { get; } =
+        typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
     private RetentionService _retention = null!;

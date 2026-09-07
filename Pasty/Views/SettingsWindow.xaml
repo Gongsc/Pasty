@@ -155,6 +155,11 @@
                     </StackPanel>
                 </Border>
 
+                <!-- 版本与许可证。文本在 code-behind 里从程序集元数据拼，
+                     写死在这里就会和 csproj 的 Version 各自漂移 -->
+                <TextBlock x:Name="AboutText" FontSize="11.5" Margin="2,10,0,4" TextWrapping="Wrap"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+
             </StackPanel>
         </ScrollViewer>
     </Grid>
