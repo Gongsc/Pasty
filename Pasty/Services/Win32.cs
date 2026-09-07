@@ -81,6 +81,10 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 
+    /// <summary>按类名找顶层窗口（不可见的也能找到，消息窗口就是从不 ShowWindow 的）。</summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern IntPtr FindWindowW(string? lpClassName, string? lpWindowName);
+
     [DllImport("user32.dll")]
     public static extern bool IsWindow(IntPtr hWnd);
 
@@ -117,10 +121,20 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
 
+    [DllImport("user32.dll")]
+    public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
     /// <summary>可靠地把目标窗口带到前台（后台进程直接调 SetForegroundWindow 会被系统拒绝）。</summary>
-    public static void ForceForeground(IntPtr hWnd)
+    /// <param name="tickAlt">注入一次 Alt 按下/抬起。系统只把前台交给“刚刚收到过输入”的进程，
+    /// 从托盘唤起窗口时本进程不满足这个条件，不补这一下 SetForegroundWindow 会被静默拒绝。</param>
+    public static void ForceForeground(IntPtr hWnd, bool tickAlt = false)
     {
         if (hWnd == IntPtr.Zero || hWnd == GetForegroundWindow()) return;
+        if (tickAlt)
+        {
+            keybd_event((byte)VK_MENU, 0, 0, UIntPtr.Zero);
+            keybd_event((byte)VK_MENU, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        }
         var targetThread = GetWindowThreadProcessId(hWnd, out _);
         var currentThread = GetCurrentThreadId();
         AttachThreadInput(currentThread, targetThread, true);

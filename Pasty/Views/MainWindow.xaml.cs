@@ -185,6 +185,17 @@ public sealed partial class MainWindow : Window
 
     public void EnsureVisible() => ShowAsWindow();
 
+    /// <summary>
+    /// 被第二个实例唤起：确保窗口可见、尺寸正确，并真的抢到前台。
+    /// 光靠 ShowAsWindow 里的 Activate 不够——发起唤起的进程正在退出、本进程又不是前台，
+    /// 系统会拒给普通 SetForegroundWindow，必须走 ForceForeground 那套附线程输入的强切。
+    /// </summary>
+    public void WakeUp()
+    {
+        ShowAsWindow();
+        Win32.ForceForeground(_hwnd, tickAlt: true);
+    }
+
     public void HidePanel()
     {
         AppWindow.Hide();

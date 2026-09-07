@@ -14,7 +14,8 @@ using System.Runtime.InteropServices;
 /// </summary>
 public sealed class MessageWindow : IDisposable
 {
-    private const string ClassName = "Pasty_MsgWindow";
+    /// <summary>类名对外可见：第二个实例靠它 FindWindow 找到已运行实例的消息窗口。</summary>
+    public const string ClassName = "Pasty_MsgWindow";
     private static bool s_classRegistered;
     private static MessageWindow? s_instance;
 

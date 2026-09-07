@@ -31,6 +31,7 @@ public partial class App : Application
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
     private RetentionService _retention = null!;
+    private SingleInstanceService _singleInstance = null!;
 
     public App()
     {
@@ -50,6 +51,17 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // 单实例守卫排在所有初始化之前：第二个实例不该读索引、不装钩子，
+        // 更不该在退出时把一份空快照落盘、覆盖掉真正在跑的那个实例的数据
+        if (!SingleInstanceService.TryBecomeFirstInstance())
+        {
+            Trace.Log("已有实例在运行：唤起它并退出本进程");
+            SingleInstanceService.WakeRunningInstance();
+            Trace.Flush(300); // 日志走后台队列，不手动等一下就整条丢失
+            Current.Exit();
+            return;
+        }
+
         Settings = AppSettings.Load();
         StorageService.Load();
         ViewModel = new MainViewModel();
@@ -57,6 +69,8 @@ public partial class App : Application
         MessageWindow = new MessageWindow();
         ClipboardMonitor = new ClipboardMonitor(MessageWindow);
         Hotkeys = new HotkeyService(MessageWindow);
+        _singleInstance = new SingleInstanceService(MessageWindow);
+        _singleInstance.WakeRequested += () => MainWindow.Current?.WakeUp();
         _retention = new RetentionService(DispatcherQueue.GetForCurrentThread());
 
         var tray = new TrayIconService(MessageWindow);

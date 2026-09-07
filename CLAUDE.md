@@ -17,17 +17,19 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 **CI**：`.github/workflows/build.yml` 在 `windows-latest` 上跑 Release x64 构建，把整个输出目录（自包含，含 Windows App SDK 运行时）压成 zip 传成 artifact；推 `v*` 标签时额外发布到 GitHub Release，并先校验标签与 csproj 的 `<Version>` 一致。
 
-**运行前先杀掉上一个实例**（没有单实例保护）。两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
+**只有一个实例能活着**：`SingleInstanceService.TryBecomeFirstInstance()` 在 `OnLaunched` 最前面抢一个会话内 Mutex，抢不到的那个只负责投递唤醒消息（把已运行实例的主窗口带到前台）然后立刻退出。以前没有这层保护时，两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
 
 **没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片 → 列表出现 → `Ctrl+Shift+V` 唤出面板 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
 
 ## 架构
 
 ### 无 DI，`App` 即服务注册表
-`App.Settings` / `App.ViewModel` / `App.MessageWindow` / `App.Hotkeys` 是静态属性，`StorageService`、`Trace`、`StartupService`、`RetentionService.Clean` 是静态类。全部装配在 `App.OnLaunched` 里，顺序有依赖：`Settings.Load` → `StorageService.Load` → ViewModel → MessageWindow → 依赖它的三个服务 → 事件接线 → 显示主窗口。
+`App.Settings` / `App.ViewModel` / `App.MessageWindow` / `App.Hotkeys` 是静态属性，`StorageService`、`Trace`、`StartupService`、`RetentionService.Clean` 是静态类。全部装配在 `App.OnLaunched` 里，顺序有依赖：**单实例守卫**（必须排第一，见下）→ `Settings.Load` → `StorageService.Load` → ViewModel → MessageWindow → 依赖它的四个服务 → 事件接线 → 显示主窗口。
+
+单实例守卫为什么必须排第一：第二个实例如果先走了后面的装配流程，就会读索引、装钩子、往同一个 `index.json` 写，退出时还可能把一份空快照落盘、盖掉真正在跑的那个实例的数据。
 
 ### 单个隐藏消息窗口是所有 Win32 事件的入口
-`Services/MessageWindow.cs` 创建一个 0×0、永不 `ShowWindow` 的 `WS_EX_TOOLWINDOW` 顶层窗口，暴露 `ProcessMessage` 事件；`ClipboardMonitor`（`WM_CLIPBOARDUPDATE`）、`HotkeyService`（`WM_HOTKEY`）、`TrayIconService`（托盘回调 + `TaskbarCreated` 广播）都挂在这一个事件上。它建在 UI 线程，消息由 XAML 消息循环泵出，因此三者的回调天然位于 UI 线程。
+`Services/MessageWindow.cs` 创建一个 0×0、永不 `ShowWindow` 的 `WS_EX_TOOLWINDOW` 顶层窗口，暴露 `ProcessMessage` 事件；`ClipboardMonitor`（`WM_CLIPBOARDUPDATE`）、`HotkeyService`（`WM_HOTKEY`）、`TrayIconService`（托盘回调 + `TaskbarCreated` 广播）、`SingleInstanceService`（第二个实例投递的唤醒消息）都挂在这一个事件上。它建在 UI 线程，消息由 XAML 消息循环泵出，因此四者的回调天然位于 UI 线程。它的类名 `Pasty_MsgWindow` 对外可见，第二个实例靠 `FindWindowW` 按类名找到它。
 
 **不要改成 `HWND_MESSAGE` 消息专用窗口**：那样收不到 `TaskbarCreated`（Explorer 重启后托盘图标不再恢复），也永远无法成为前台窗口（托盘右键菜单点别处不消失）。WndProc 委托由静态字段持有，删掉那个字段会让窗口类持有被 GC 回收的存根，随机闪退。
 
