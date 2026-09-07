@@ -15,6 +15,8 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 `-p:Platform=x64` 只影响输出目录：省掉也能编过，但产物落到 `bin\Debug\` 而非 `bin\x64\Debug\`，与上面的运行路径不符。`dotnet build Pasty.sln` 亦可（sln 把 Any CPU 映射到 x64）。
 
+**CI**：`.github/workflows/build.yml` 在 `windows-latest` 上跑 Release x64 构建，把整个输出目录（自包含，含 Windows App SDK 运行时）压成 zip 传成 artifact；推 `v*` 标签时额外发布到 GitHub Release，并先校验标签与 csproj 的 `<Version>` 一致。
+
 **运行前先杀掉上一个实例**（没有单实例保护）。两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
 
 **没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片 → 列表出现 → `Ctrl+Shift+V` 唤出面板 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
@@ -94,5 +96,6 @@ dotnet run --project tools/IconGen -- Pasty/Assets
 ## 约定
 
 - 界面文案、代码注释、提交信息全部中文。注释解释**为什么**（多数是某个已修 bug 的成因），改动相关代码时要么保持注释成立，要么一并更新——不要留下描述已不存在行为的注释。
+- **版本号只写 `Pasty.csproj` 的 `<Version>` 一处**，设置页底部读 `App.Version`（从程序集元数据来），CI 的产物名与 Release 标题从 csproj 读。发版同时打一个同名的 `v<版本号>` 标签，CI 会校验两者一致。
 - 热键可选组合是 `SettingsWindow.xaml.cs` 里硬编码的 `(名称, modifiers, vk)` 数组，设置里存的是裸的 modifier 位与虚拟键码；加组合改数组即可。
 - `PLAN.md` 是初始实施计划，`ui-mockup.html` / `ui-design.png` 是 UI 设计稿，均为历史参考，不随代码更新。

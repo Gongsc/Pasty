@@ -1,5 +1,7 @@
 # Pasty — Windows 剪切板管理器
 
+**v0.1.0** · GNU GPL v3
+
 WinUI 3 (Windows App SDK 1.6) + .NET 8 开发的本地剪切板历史管理工具。
 
 ## 功能
@@ -27,6 +29,17 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 ## 结构
 
 - `Models/`：ClipItem 条目、AppSettings 设置
-- `Services/`：Win32 互操作、消息窗口、剪贴板监听、热键/钩子、粘贴、存储、过期清理、自启、托盘
-- `Views/`：MainWindow（历史列表 + 全文预览）、SettingsWindow（独立设置）
-- `PLAN.md` / `ui-design.png` / `ui-mockup.html`：实施计划与 UI 设计图
+- `Services/`：Win32 互操作、消息窗口、剪贴板监听、热键/钩子、前台窗口跟踪、粘贴、存储、过期清理、自启、托盘
+- `Views/`：MainWindow（历史列表 + 全文预览）、SettingsWindow（独立设置，底部显示版本号）
+- `doc/`：PLAN.md（初始实施计划）与 icon-preview.html / ui-design.png / ui-mockup.html（设计稿），均为历史参考
+- `.github/workflows/build.yml`：push / PR 自动构建，推 `v*` 标签时把 zip 发布到 GitHub Release
+
+## 下载与版本
+
+版本号只写在 `Pasty/Pasty.csproj` 的 `<Version>` 一处，设置页底部、zip 文件名与 Release 标题都从它派生。
+发版：改 `<Version>` → 提交 → `git tag v0.1.0 && git push origin v0.1.0`；CI 会先校验标签与版本号一致，再发布。
+
+## 许可
+
+GNU GPL v3（全文见 `LICENSE`）。数据全部存在本机 `%LOCALAPPDATA%\Pasty`，程序不联网。
+
