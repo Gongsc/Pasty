@@ -9,68 +9,69 @@ namespace Pasty.Services;
 /// <summary>把条目写入剪贴板并向目标窗口发送 Ctrl+V。</summary>
 public static class PasteService
 {
-    private static bool _busy; // 粘贴流程进行中，忽略新触发，避免按键/剪贴板互踩
+    // 连续触发时顺序执行，避免几次剪贴板写入和注入按键互踩；
+    // 不能直接丢弃，否则用户按住 Ctrl 后逐次按 V，后面的有效按键会没有反应。
+    private static readonly SemaphoreSlim PasteGate = new(1, 1);
 
     public static async Task PasteAsync(ClipItem item, IntPtr targetHwnd)
     {
-        if (_busy)
-        {
-            Trace.Log("paste 忙碌中，忽略新触发");
-            return;
-        }
-        _busy = true;
-        // 内容已经不在了（源文件被删、U 盘拔了、图片文件丢了）就什么都别做：
-        // 既不该把用户原本的剪贴板清空，也不值得为一次注定失败的粘贴抢前台窗口。
-        if (!item.CanWriteToClipboard)
-        {
-            Trace.Log($"paste 条目内容已失效，取消 item={item.Type}");
-            _busy = false;
-            return;
-        }
-        // 目标必须是仍然存活、可见且不属于本进程的窗口。否则 ForceForeground 会静默失败，
-        // 而 SendInput 只认“当前前台窗口”，Ctrl+V 就会落到 Pasty 自己或某个无关窗口里。
-        var canSendKeys = Win32.IsPasteTarget(targetHwnd);
-        Trace.Log($"paste 开始 item={item.Type} target=0x{targetHwnd.ToInt64():X} 可发送按键={canSendKeys}");
-        ClipboardMonitor.Suspended = true;
-        HotkeyService.SuppressHookAction = true;
+        await PasteGate.WaitAsync();
         try
         {
-            await WriteToClipboardAsync(item);
-            Trace.Log("paste 剪贴板已写入");
-
-            if (!canSendKeys)
+            // 内容已经不在了（源文件被删、U 盘拔了、图片文件丢了）就什么都别做：
+            // 既不该把用户原本的剪贴板清空，也不值得为一次注定失败的粘贴抢前台窗口。
+            if (!item.CanWriteToClipboard)
             {
-                // 例如从托盘打开主窗口后直接点“粘贴”：没有外部目标可送按键，
-                // 但内容已经进了剪贴板，用户切到目标应用自己按 Ctrl+V 即可。
-                Trace.Log("paste 无有效外部目标，仅写入剪贴板");
+                Trace.Log($"paste 条目内容已失效，取消 item={item.Type}");
                 return;
             }
+            // 目标必须是仍然存活、可见且不属于本进程的窗口。否则 ForceForeground 会静默失败，
+            // 而 SendInput 只认“当前前台窗口”，Ctrl+V 就会落到 Pasty 自己或某个无关窗口里。
+            var canSendKeys = Win32.IsPasteTarget(targetHwnd);
+            Trace.Log($"paste 开始 item={item.Type} target=0x{targetHwnd.ToInt64():X} 可发送按键={canSendKeys}");
+            ClipboardMonitor.Suspended = true;
+            try
+            {
+                await WriteToClipboardAsync(item);
+                Trace.Log("paste 剪贴板已写入");
 
-            await Task.Delay(80);
+                if (!canSendKeys)
+                {
+                    // 例如从托盘打开主窗口后直接点“粘贴”：没有外部目标可送按键，
+                    // 但内容已经进了剪贴板，用户切到目标应用自己按 Ctrl+V 即可。
+                    Trace.Log("paste 无有效外部目标，仅写入剪贴板");
+                    return;
+                }
 
-            if (Win32.IsIconic(targetHwnd)) Win32.ShowWindow(targetHwnd, 9 /* SW_RESTORE */);
-            // 用户刚在目标窗口按下 Ctrl+V 时它已是前台，无需切换；仅在必要时强切
-            Win32.ForceForeground(targetHwnd);
-            await Task.Delay(60);
+                if (Win32.IsIconic(targetHwnd)) Win32.ShowWindow(targetHwnd, 9 /* SW_RESTORE */);
+                // 键盘触发时目标本来就在前台，直接发送即可；只有鼠标从 Pasty 窗口发起时
+                // 才强切并给窗口一个消息泵回合，不再让所有 Ctrl+V 固定等待 140ms。
+                if (Win32.GetForegroundWindow() != targetHwnd)
+                {
+                    Win32.ForceForeground(targetHwnd);
+                    await Task.Delay(30);
+                }
 
-            var sent = Win32.SendCtrlV();
-            Trace.Log($"paste SendInput 结果={sent} (0=失败)");
-            if (sent == 0)
-                Trace.Log($"paste SendInput 失败，错误码={Marshal.GetLastWin32Error()}");
-            Trace.Log($"paste 已发送 Ctrl+V 到 0x{Win32.GetForegroundWindow().ToInt64():X}");
-            // 使用次数与排序由调用方的 ViewModel.Touch 统一负责，这里不再重复计数
-        }
-        catch (Exception ex)
-        {
-            Trace.Log($"paste 异常: {ex.Message}");
+                var sent = Win32.SendCtrlV();
+                Trace.Log($"paste SendInput 结果={sent} (0=失败)");
+                if (sent == 0)
+                    Trace.Log($"paste SendInput 失败，错误码={Marshal.GetLastWin32Error()}");
+                Trace.Log($"paste 已发送 Ctrl+V 到 0x{Win32.GetForegroundWindow().ToInt64():X}");
+                // 使用次数与排序由调用方的 ViewModel.Touch 统一负责，这里不再重复计数
+            }
+            catch (Exception ex)
+            {
+                Trace.Log($"paste 异常: {ex.Message}");
+            }
+            finally
+            {
+                ClipboardMonitor.Suspended = false;
+                Trace.Log("paste 结束");
+            }
         }
         finally
         {
-            await Task.Delay(200); // 等目标应用处理完按键再解除挂起
-            HotkeyService.SuppressHookAction = false;
-            ClipboardMonitor.Suspended = false;
-            _busy = false;
-            Trace.Log("paste 结束");
+            PasteGate.Release();
         }
     }
 

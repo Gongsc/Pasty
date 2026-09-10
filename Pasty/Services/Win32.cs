@@ -256,6 +256,8 @@ internal static class Win32
 
     public const uint INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_KEYUP = 0x0002;
+    /// <summary>写入 KEYBDINPUT.dwExtraInfo，用来让键盘钩子可靠识别 Pasty 自己注入的按键。</summary>
+    public static readonly IntPtr PastyInjectedInput = new(0x50535459); // "PSTY"
 
     // 托盘
     [DllImport("shell32.dll", SetLastError = true)]
@@ -375,22 +377,40 @@ internal static class Win32
 
     public static uint SendCtrlV()
     {
-        // 带扫描码发送，兼容按扫描码处理按键的应用
-        var inputs = new INPUT[4];
-        inputs[0].type = INPUT_KEYBOARD;
-        inputs[0].u.ki.wVk = (ushort)VK_CONTROL;
-        inputs[0].u.ki.wScan = 0x001D;
-        inputs[1].type = INPUT_KEYBOARD;
-        inputs[1].u.ki.wVk = (ushort)VK_V;
-        inputs[1].u.ki.wScan = 0x002F;
-        inputs[2].type = INPUT_KEYBOARD;
-        inputs[2].u.ki.wVk = (ushort)VK_V;
-        inputs[2].u.ki.wScan = 0x002F;
-        inputs[2].u.ki.dwFlags = KEYEVENTF_KEYUP;
-        inputs[3].type = INPUT_KEYBOARD;
-        inputs[3].u.ki.wVk = (ushort)VK_CONTROL;
-        inputs[3].u.ki.wScan = 0x001D;
-        inputs[3].u.ki.dwFlags = KEYEVENTF_KEYUP;
+        // 用户仍按着物理 Ctrl 时只补 V：若再注入一次 Ctrl 抬起，系统会把仍按着的 Ctrl
+        // 也视为已经释放，紧接着的第二次物理 V 就会变成裸字母。用户已经松开 Ctrl 时，
+        // 才发送完整的 Ctrl+V，兼容鼠标点击条目与粘贴按钮的路径。
+        var ctrlDown = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+        var inputs = new INPUT[ctrlDown ? 2 : 4];
+        var offset = 0;
+        if (!ctrlDown)
+        {
+            inputs[offset].type = INPUT_KEYBOARD;
+            inputs[offset].u.ki.wVk = (ushort)VK_CONTROL;
+            inputs[offset].u.ki.wScan = 0x001D;
+            offset++;
+        }
+
+        inputs[offset].type = INPUT_KEYBOARD;
+        inputs[offset].u.ki.wVk = (ushort)VK_V;
+        inputs[offset].u.ki.wScan = 0x002F;
+        offset++;
+        inputs[offset].type = INPUT_KEYBOARD;
+        inputs[offset].u.ki.wVk = (ushort)VK_V;
+        inputs[offset].u.ki.wScan = 0x002F;
+        inputs[offset].u.ki.dwFlags = KEYEVENTF_KEYUP;
+
+        if (!ctrlDown)
+        {
+            offset++;
+            inputs[offset].type = INPUT_KEYBOARD;
+            inputs[offset].u.ki.wVk = (ushort)VK_CONTROL;
+            inputs[offset].u.ki.wScan = 0x001D;
+            inputs[offset].u.ki.dwFlags = KEYEVENTF_KEYUP;
+        }
+
+        foreach (ref var input in inputs.AsSpan())
+            input.u.ki.dwExtraInfo = PastyInjectedInput;
         return SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<INPUT>());
     }
 

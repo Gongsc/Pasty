@@ -18,9 +18,8 @@ public sealed class HotkeyService : IDisposable
     private IntPtr _hook;
     private int _hookError;
     private readonly Win32.KeyboardHookDelegate _hookProc; // 防 GC
-    private bool _vKeyDown; // 物理 V 键是否处于按下状态（用于忽略自动重复）
+    private bool _vKeyDown; // 被钩子吞掉的物理 V 是否仍处于按下状态（用于忽略自动重复并配对吞掉抬键）
     public static volatile bool OverrideCtrlV;
-    public static volatile bool SuppressHookAction;
 
     /// <summary>
     /// 热键注册与钩子安装的失败说明，空表示一切正常。
@@ -123,27 +122,27 @@ public sealed class HotkeyService : IDisposable
         var msg = (uint)wParam;
         var kb = Marshal.PtrToStructure<Win32.KBDLLHOOKSTRUCT>(lParam);
 
-        // HookTestMode：注入的按键也按物理键处理（仅用于诊断，由 flag 文件开启）
-        var injected = (kb.flags & Win32.LLKHF_INJECTED) != 0 && !HookTestMode;
-        if (kb.vkCode != Win32.VK_V || injected)
+        if (kb.dwExtraInfo == Win32.PastyInjectedInput)
             return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
 
-        // 抬键：物理状态必须无条件复位，不能放在 SuppressHookAction 门控内。
-        // 粘贴流程在按下后的一个消息泵回合内就置起 SuppressHookAction，并保持约 340ms；
-        // 真人松手只需约 100ms，若抬键被门控跳过，_vKeyDown 会永久停留在 true，
-        // 下一次 Ctrl+V 撞上自动重复判定被吞掉——表现为每隔一次 Ctrl+V 完全失效。
+        var injected = (kb.flags & Win32.LLKHF_INJECTED) != 0;
+        // HookTestMode：注入按键也进入下面的状态判断，便于诊断；正常运行时直接放行给目标应用。
+        if (kb.vkCode != Win32.VK_V || (injected && !HookTestMode))
+            return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
+
+        // 抬键无条件复位并与被吞掉的按下事件配对，目标应用不能收到半截 V 事件。
         if (msg == Win32.WM_KEYUP || msg == Win32.WM_SYSKEYUP)
         {
             var wasSwallowed = _vKeyDown;
             _vKeyDown = false;
-            return wasSwallowed && (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0
+            return wasSwallowed
                 ? new IntPtr(1) // 按下已被吞掉，抬键一并吞掉，避免目标应用收到半截按键
                 : Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
         }
 
         if (msg != Win32.WM_KEYDOWN && msg != Win32.WM_SYSKEYDOWN)
             return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
-        if (SuppressHookAction || !OverrideCtrlV)
+        if (!OverrideCtrlV)
             return Win32.CallNextHookEx(_hook, nCode, wParam, lParam);
         if ((Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) == 0 || IsModifierDown())
             return Win32.CallNextHookEx(_hook, nCode, wParam, lParam); // 普通 v 键或 Shift/Alt+V：放行

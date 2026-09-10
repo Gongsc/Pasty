@@ -333,12 +333,20 @@ public sealed partial class MainWindow : Window
             _rows.Add(new Models.HeaderRow { Title = "\u2606 已置顶" });
             foreach (var i in App.ViewModel.Pinned) _rows.Add(i);
         }
-        // 「最近」这个标题以前是无条件加的：一条最近记录都没有时，
-        // 列表里只剩一个孤零零的标题，看着像卡在加载中
-        if (App.ViewModel.Recent.Count > 0)
+        // 未置顶记录按最后复制/使用日期分组。今天叫“最近”、昨天单独显示，
+        // 更早的直接写完整日期，避免只写“更早”后还得逐行辨认时间。
+        var today = DateTime.Today;
+        foreach (var group in App.ViewModel.Recent
+                     .GroupBy(i => i.LastUsedAt.Date)
+                     .OrderByDescending(g => g.Key))
         {
-            _rows.Add(new Models.HeaderRow { Title = "最近" });
-            foreach (var i in App.ViewModel.Recent) _rows.Add(i);
+            var title = group.Key == today
+                ? "最近"
+                : group.Key == today.AddDays(-1)
+                    ? "昨天"
+                    : group.Key.ToString("yyyy年M月d日");
+            _rows.Add(new Models.HeaderRow { Title = title });
+            foreach (var item in group) _rows.Add(item);
         }
         UpdateListEmptyHint();
 

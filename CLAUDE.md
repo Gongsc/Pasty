@@ -44,7 +44,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 `Save()` 只登记最新快照并保证全程只有一个后台写入任务（顺序写、`tmp` + `File.Move` 原子替换）。因此**退出路径必须走 `App.Exit()`**：它按 `Hotkeys.Dispose` → `ForegroundService.Stop` → 托盘移除 → `StorageService.Flush()`（同步落盘）→ `Trace.Flush()` → `Current.Exit()` 的顺序收尾。直接调 `Application.Current.Exit()` 会丢掉最后一批改动。
 
 ### 粘贴链路（最容易改坏的部分）
-`PasteService.PasteAsync`：置起 `ClipboardMonitor.Suspended` + `HotkeyService.SuppressHookAction` → 写剪贴板 → 延时 → `ForceForeground(target)` → `SendCtrlV()` → finally 延时 200ms 再复位标志。
+`PasteService.PasteAsync`：经 `SemaphoreSlim` 串行排队 → 置起 `ClipboardMonitor.Suspended` → 写剪贴板 → 仅在目标不处于前台时 `ForceForeground(target)` 并短暂等待 → `SendCtrlV()` → finally 复位标志。键盘触发且目标仍在前台时没有固定延时。
 
 目标窗口一律经 `ForegroundService.ResolvePasteTarget()` 取，它按两级兜底：先取热键触发时记下的句柄，再取 `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` 持续跟踪到的"最近一个外部前台窗口"。
 
@@ -58,7 +58,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 ### 低级键盘钩子的硬约束（`HotkeyService.LowLevelHook`）
 钩子回调在 UI 线程上执行，**同步耗时超过 `LowLevelHooksTimeout`（默认 300ms）系统会静默摘掉钩子**，此后"覆盖 Ctrl+V"永久失效且没有任何报错。所以：回调内不做文件 IO（`Trace` 因此是后台队列写入），动作一律 `_dispatcher.TryEnqueue` 出去。
 
-抬键分支必须在 `SuppressHookAction` 门控**之外**无条件复位 `_vKeyDown`，否则物理状态卡在 true，下一次 Ctrl+V 撞上自动重复判定被吞掉（表现为每隔一次失效）。钩子只在启动时装一次，`ReRegister()` 只更新开关并在钩子缺失时报错。
+被吞掉的 V 抬键必须无条件复位 `_vKeyDown` 并一并吞掉，否则物理状态会卡住或把半截按键交给目标应用。`SendCtrlV()` 注入的每个按键都带 `PastyInjectedInput` 标记，钩子必须优先放行；用户仍按着物理 Ctrl 时只能注入 V，不能注入 Ctrl 抬起，否则下一次 V 会退化成裸字母。钩子只在启动时装一次，`ReRegister()` 只更新开关并在钩子缺失时报错。
 
 ### 主窗口是一个窗口的两种形态
 `MainWindow._panelMode`：`ShowAsPanel()` 缩到 440×520 并定位到光标处，`ShowAsWindow()` 恢复 1060×680（少了这次 Resize，托盘打开的窗口会一直是面板宽度）。尺寸常量是**逻辑像素**，`AppWindow.Resize/Move` 收的是**物理像素**，必须经 `Scaled()` 按 `GetDpiForWindow` 换算。定位用 `FitInto` 而非 `Math.Clamp`（工作区比窗口还小时 `Clamp` 会因 min > max 抛异常）。关闭按钮被 `AppWindow.Closing` 拦下改为隐藏到托盘。
