@@ -1,6 +1,6 @@
 # Pasty — Windows 剪切板管理器
 
-**v0.1.0** · GNU GPL v3
+**GNU GPL v3**
 
 WinUI 3 (Windows App SDK 1.6) + .NET 8 开发的本地剪切板历史管理工具。
 
@@ -40,7 +40,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 ## 下载与版本
 
 版本号只写在 `Pasty/Pasty.csproj` 的 `<Version>` 一处，设置页底部、zip 文件名与 Release 标题都从它派生。
-发版：改 `<Version>` → 提交 → `git tag v0.1.0 && git push origin v0.1.0`；CI 会先校验标签与版本号一致，再发布。
+发版：改 `<Version>` → 提交 → 创建并推送同名的 `v<版本号>` 标签；CI 会先校验标签与版本号一致，再发布。
 
 ## 许可
 
