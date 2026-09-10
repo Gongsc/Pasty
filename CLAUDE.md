@@ -19,7 +19,9 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 **只有一个实例能活着**：`SingleInstanceService.TryBecomeFirstInstance()` 在 `OnLaunched` 最前面抢一个会话内 Mutex，抢不到的那个只负责投递唤醒消息（把已运行实例的主窗口带到前台）然后立刻退出。以前没有这层保护时，两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
 
-**没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片 → 列表出现 → `Ctrl+Shift+V` 唤出面板 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
+**没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片/文件 → 列表出现（图标按类型区分、能直接粘的行有主色竖条）→ `Ctrl+Shift+V` 唤出面板 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
+
+验证界面时注意：**屏幕抓不到 WinUI 3 的窗口内容**（`CopyFromScreen` 与 `PrintWindow(PW_RENDERFULLCONTENT)` 截出来都是黑块，其他应用正常）。可行的办法是用 UI Automation 读元素树（PowerShell 的 `System.Windows.Automation`）：列表项里只有可见元素会进树，所以行内 Text 的 Name 能直接验到类型标签、meta 文案与“图标只剩一个”这类可见性结论；再配合 `InvokePattern` 点“复制”、用 `DragQueryFileW` 读回 `CF_HDROP`，就能不靠眼睛跑完整条链路。
 
 ## 架构
 
@@ -50,7 +52,8 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 - **任何写剪贴板的代码写完后要调 `ClipboardMonitor.MarkSelfWrite()`；什么都没写时绝不能调。** `Suspended` 布尔量单独不够用：`WM_CLIPBOARDUPDATE` 是投递消息，到达时同步段早已把标志复位，真正的过滤靠 `GetClipboardSequenceNumber()` 比较。空写却推进序号会连带吞掉用户的下一次复制。
 - **粘贴目标绝不能只靠热键那一刻的缓存。** 热键缓存是"取用即清除"的（`HotkeyService.ConsumeLastForegroundWindow()`），只对紧随触发的那一次粘贴有效；留着不清会让几小时前按热键时记下的窗口继续被当成目标，而那个句柄可能已销毁并被回收给别的进程。**鼠标操作（双击条目、点"粘贴"按钮）没有那样的触发时刻可记**，早先因此退回 `GetForegroundWindow()` 拿到 Pasty 自己，`IsPasteTarget` 不通过就只写剪贴板不发按键，用户看到的就是"条目跳到最顶端、目标应用里什么都没出现"。这就是 `ForegroundService` 存在的理由，别把它删了退回单级缓存。
-- **任何候选句柄用之前都要过 `Win32.IsPasteTarget()`**（存活、可见、不属于本进程）。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。`ForegroundService` 的回调跑在 UI 线程的消息泵上，和键盘钩子一样不许做耗时事，只记句柄；它刻意忽略自己的窗口（否则面板一弹出就把目标覆盖成面板自己），并跳过任务栏/桌面这类"不是任何应用"的窗口。
+- **任何候选句柄用之前都要过 `Win32.IsPasteTarget()`**（存活、可见、不属于本进程）。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。`ForegroundService` 的回调跑在 UI 线程的消息泵上，和键盘钩子一样不许做耗时事，只记句柄；它刻意忽略自己的窗口（否则面板一弹出就把目标覆盖成面板自己），并跳过任务栏/桌面这类“不是任何应用”的窗口。
+- **内容已经不在了的条目（`Readiness == Unavailable`）一个字节都不写**。`PasteAsync` 开头就退出，`WriteToClipboardAsync` 对文件条目要求每个路径都还在才写：把不存在的路径塞进剪贴板，目标应用只会报“找不到文件”，而 `EmptyClipboard` 已经先把用户原本的内容清掉了。宁可什么都不做。
 
 ### 低级键盘钩子的硬约束（`HotkeyService.LowLevelHook`）
 钩子回调在 UI 线程上执行，**同步耗时超过 `LowLevelHooksTimeout`（默认 300ms）系统会静默摘掉钩子**，此后"覆盖 Ctrl+V"永久失效且没有任何报错。所以：回调内不做文件 IO（`Trace` 因此是后台队列写入），动作一律 `_dispatcher.TryEnqueue` 出去。
@@ -62,10 +65,39 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 主题走 `RootGrid.RequestedTheme`（每窗口），`App.ApplyTheme()` 统一分发到主窗口与设置窗口。
 
-### 图片
+### 列表行的类型图标与“能不能粘”
+每条 `ClipItem` 有一个 `Readiness`（`Direct` / `Limited` / `Unavailable`），列表与粘贴链路都读它：
+
+- **`Direct`**（文字 / 链接 / 图片，且内容还在）——行左缘有主色竖条，粘进大多数应用都认。
+- **`Limited`**（文件条目，源文件还在）——没有竖条：只有支持接收文件的目标（资源管理器、微信、Office）粘得上。
+- **`Unavailable`**（图片被清掉、源文件删了或 U 盘拔了）——图标换成警告三角、整行置灰、meta 开头是 `⚠ 已失效`，预览区的“复制 / 粘贴”按钮直接禁用。
+
+判定内容在不在**必须带 30 秒缓存**（`ClipItem.Probe`）：一次列表重建要为每行问上好几遍文件系统，
+而 `File.Exists` / `FileInfo.Length` 在未插卡的读卡器、断线的移动硬盘上能阻塞上百毫秒——
+这些都发生在 UI 线程上，而键盘钩子靠这个线程的消息泵，卡久了钩子会被静默摘掉。
+文字条目不碰文件系统，所以走缓存之外每次现算（否则编辑完字数还要 30 秒才更新）。
+
+图标字形与配色表在 `Models/ContentKind.cs`：字形全部取自 **Segoe MDL2 Assets**（Win10 起自带，
+Win11 的 Segoe Fluent Icons 同码点兼容），不要换成只在 Win11 才有的字形。
+底色走 XAML 的 `ThemeResource`，只有按类型取的那支画笔走代码（`MainWindow.KindBrush`），
+并且必须看**本窗口**的 `RootGrid.ActualTheme`——用 `Application.Current.Resources` 解析的是“应用”主题，
+手动切亮/深色时颜色不跟着变（以前就踩过）。模板是 OneTime 绑定，所以 `ActualThemeChanged` 里要 `UpdateGroups()` 重建一次。
+
+### 图片与文件
 磁盘上一律 PNG（`%LOCALAPPDATA%\Pasty\images\<guid>.png`）。**编码（`ClipboardMonitor.EncodePngAsync`）与回写剪贴板（`PasteService.WriteImageClipboardAsync`）两端都用 `Bgra8` + `BitmapAlphaMode.Straight`**，改动其中一端会让半透明区域发暗、边缘发黑。回写用原始 Win32 `CF_DIB`（自下而上行序）+ 注册的 "PNG" 格式，覆盖不同应用的取图偏好。
 
-去重：文本比字符串；图片先比文件长度，长度相同再比 SHA-256（`ClipItem.ImageHash` 缓存并随索引持久化）。**去重命中时必须删掉刚写进 images 的那个新文件**，否则每次重复复制都留一个永久孤儿。`SweepOrphanImages()` 只在索引读取成功时执行——索引读失败时 `Items` 是空的，一扫会删光用户所有图片。
+文件条目（复制视频、压缩包、文件夹得到的）**只记路径，绝不把文件复制进数据目录**（一段视频可能就是几个 GB），
+因此有两个推论：**删除条目 / 过期清理 / 去重都不能删 `FilePaths` 指向的东西**（只有 `images` 目录里 Pasty 自己写的 PNG 能删，
+`StorageService.DeleteImage` 有目录前缀校验兼作这道门）；回写用 `CF_HDROP`，并且**必须同时写 `Preferred DropEffect = DROPEFFECT_COPY`**，
+不写时资源管理器粘过去可能按“移动”理解，把用户的原文件搬走。
+
+读剪贴板时的优先级是 **文字 → 位图 → 文件**：浏览器“复制网页图片”会同时留下位图与临时文件路径，
+按图片记才不会存一个随时会被清掉的临时路径。文件走 `Win32.ReadClipboardFileDrop()`（`CF_HDROP` + `DragQueryFileW`）
+而不是 `DataPackage.GetStorageItemsAsync()`：后者要为每个路径构造 shell item，慢且不稳定的时候会堵死 UI 线程的消息泵。
+
+去重：文本比字符串；图片先比文件长度，长度相同再比 SHA-256（`ClipItem.ImageHash` 缓存并随索引持久化）；
+文件只比路径集合（忽略大小写、顺序无关），**绝不为了去重去哈希一个几个 GB 的视频**。
+**去重命中时必须删掉刚写进 images 的那个新文件**，否则每次重复复制都留一个永久孤儿。`SweepOrphanImages()` 只在索引读取成功时执行——索引读失败时 `Items` 是空的，一扫会删光用户所有图片。
 
 ## 数据目录与调试开关
 

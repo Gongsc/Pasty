@@ -47,6 +47,70 @@ internal static class Win32
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool AddClipboardFormatListener(IntPtr hwnd);
 
+    /// <summary>当前剪贴板上有没有这个格式。比 OpenClipboard 便宜得多，适合先探一下。</summary>
+    [DllImport("user32.dll")]
+    public static extern bool IsClipboardFormatAvailable(uint format);
+
+    /// <summary>取剪贴板上的某个格式。返回的内存归系统所有，**绝不能 GlobalFree**，
+    /// 而且必须在 CloseClipboard 之前用完。</summary>
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr GetClipboardData(uint uFormat);
+
+    /// <summary>枚举 CF_HDROP 里的文件路径。iFile 传 0xFFFFFFFF 且缓冲区传 null 即取总数。</summary>
+    [DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern uint DragQueryFileW(IntPtr hDrop, uint iFile, StringBuilder? lpszFile, uint cch);
+
+    /// <summary>
+    /// 读出剪贴板上的文件列表（资源管理器复制文件、复制一段视频时就是这个格式）。
+    /// 没有 CF_HDROP 或剪贴板被别人占着时返回空列表——不抛异常，调用方把它当成“没有文件”即可。
+    /// </summary>
+    public static List<string> ReadClipboardFileDrop()
+    {
+        var paths = new List<string>();
+        if (!IsClipboardFormatAvailable(CF_HDROP)) return paths;
+        if (!OpenClipboard(IntPtr.Zero)) return paths;
+        try
+        {
+            var hDrop = GetClipboardData(CF_HDROP);
+            if (hDrop == IntPtr.Zero) return paths;
+            var count = DragQueryFileW(hDrop, 0xFFFFFFFF, null, 0);
+            var sb = new StringBuilder(2048);
+            for (uint i = 0; i < count; i++)
+            {
+                sb.Clear();
+                var len = DragQueryFileW(hDrop, i, sb, (uint)sb.Capacity);
+                if (len > 0) paths.Add(sb.ToString(0, (int)len));
+            }
+        }
+        finally
+        {
+            CloseClipboard(); // 句柄一过这里就失效，路径已经全部拷进托管字符串
+        }
+        return paths;
+    }
+
+    /// <summary>
+    /// 构造 CF_HDROP 的数据块：20 字节的 DROPFILES 头 + UTF-16 路径列表，
+    /// 每条以 \0 结尾、整个列表再以一个空字符收尾。
+    /// pFiles 是“路径列表相对结构体开头的偏移”，fWide=1 声明用的是宽字符。
+    /// </summary>
+    public static byte[] BuildDropFiles(IReadOnlyList<string> paths)
+    {
+        using var ms = new MemoryStream();
+        var header = new byte[20];
+        BitConverter.GetBytes(header.Length).CopyTo(header, 0); // pFiles
+        BitConverter.GetBytes(1).CopyTo(header, 16);            // fWide
+        ms.Write(header);
+        foreach (var p in paths)
+        {
+            var bytes = Encoding.Unicode.GetBytes(p + "\0");
+            ms.Write(bytes, 0, bytes.Length);
+        }
+        var end = new byte[2]; // 列表结尾的第二个 \0
+        ms.Write(end, 0, end.Length);
+        return ms.ToArray();
+    }
+
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
@@ -225,6 +289,8 @@ internal static class Win32
     public static extern uint RegisterClipboardFormatW(string lpszFormat);
 
     public const uint CF_DIB = 8;
+    /// <summary>文件列表（资源管理器复制/剪切文件、复制视频音频时用的格式）。</summary>
+    public const uint CF_HDROP = 15;
     public const uint GMEM_MOVEABLE = 0x0002;
 
     [DllImport("user32.dll", SetLastError = true)]

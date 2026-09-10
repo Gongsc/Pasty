@@ -16,9 +16,13 @@ public class MainViewModel
 
     private List<ClipItem> All => StorageService.Items;
 
-    /// <summary>Ctrl+V 覆盖模式要粘贴的“第一条”：按最近复制/使用时间取，而非置顶优先。</summary>
+    /// <summary>
+    /// Ctrl+V 覆盖模式要粘贴的“第一条”：按最近复制/使用时间取，而非置顶优先。
+    /// 跳过内容已经不在了的条目（刚复制过一个文件、随后把那个文件删了）：
+    /// 否则按 Ctrl+V 会撞上一条粘不出去的记录，在用户看来就是“按了没反应”。
+    /// </summary>
     public ClipItem? TopItem =>
-        StorageService.Items.FirstOrDefault();
+        StorageService.Items.FirstOrDefault(i => i.CanWriteToClipboard);
 
     /// <summary>历史总条数，不受搜索过滤影响。空状态文案与“清空”按钮的可用性都要看它。</summary>
     public int TotalCount => All.Count;
@@ -75,13 +79,19 @@ public class MainViewModel
 
     /// <summary>
     /// 两个条目内容是否相同。图片先比文件长度（廉价），只有长度相同才真正比内容哈希：
-    /// 仅凭长度判定会把两张恰好等长的不同截图当成同一张，后来的那张被静默丢弃。
-    /// 截图尺寸相同时 PNG 长度撞车并不罕见，所以这一步不能省。
+    /// 仅凭长度判定会把两张恰好等长的不同截图当成同一张，后来的那张被静默丢弃
+    /// （截图尺寸相同时 PNG 长度撞车并不罕见，所以这一步不能省）。
+    /// 文件条目只比路径（顺序无关、忽略大小写）：绝不为了去重去哈希一个几个 GB 的视频。
     /// </summary>
     private static bool IsSameContent(ClipItem a, ClipItem b)
     {
         if (a.Type != b.Type) return false;
         if (a.Type == ClipType.Text) return a.Text == b.Text;
+        if (a.Type == ClipType.File)
+            return a.FilePaths.Count == b.FilePaths.Count &&
+                   a.FilePaths.OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                    .SequenceEqual(b.FilePaths.OrderBy(p => p, StringComparer.OrdinalIgnoreCase),
+                        StringComparer.OrdinalIgnoreCase);
 
         if (a.ImagePath == null || b.ImagePath == null) return false;
         var fa = new FileInfo(a.ImagePath);
@@ -149,8 +159,7 @@ public class MainViewModel
     {
         var filtered = string.IsNullOrWhiteSpace(_filter)
             ? All
-            : All.Where(i => i.Type == ClipType.Text &&
-                             i.Text.Contains(_filter, StringComparison.OrdinalIgnoreCase)).ToList();
+            : All.Where(i => Matches(i, _filter)).ToList();
 
         void Sync(ObservableCollection<ClipItem> target, IEnumerable<ClipItem> source)
         {
@@ -162,4 +171,16 @@ public class MainViewModel
         Sync(Recent, filtered.Where(i => !i.IsPinned));
         GroupsChanged?.Invoke();
     }
+
+    /// <summary>
+    /// 搜索匹配：文字条目比内容，文件条目比文件名（按视频找以前复制过的片子是最常见的用法）。
+    /// 图片存的是 Pasty 自己生成的 GUID 文件名，比它没有意义。
+    /// </summary>
+    private static bool Matches(ClipItem item, string filter) => item.Type switch
+    {
+        ClipType.Text => item.Text.Contains(filter, StringComparison.OrdinalIgnoreCase),
+        ClipType.File => item.FilePaths.Any(p =>
+            Path.GetFileName(p).Contains(filter, StringComparison.OrdinalIgnoreCase)),
+        _ => false,
+    };
 }

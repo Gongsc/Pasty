@@ -94,34 +94,60 @@
                             <!-- 这里的绑定都是默认的 OneTime。ClipItem 没有实现 INotifyPropertyChanged，
                                  写 Mode=OneWay 也收不到任何通知，只会让人误以为它会自动刷新。
                                  真正的刷新靠 MainWindow.UpdateGroups() 整体重建 _rows
-                                 （置顶/编辑/删除/清理都会走到），容器复用时模板会重新求值。 -->
+                                 （置顶/编辑/删除/清理都会走到），容器复用时模板会重新求值。
+                                 主题切换也要重建一次：图标配色与置灰文字是代码里按当前窗口主题取的。 -->
                             <Grid Margin="0,5" MinHeight="36">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <!-- 类型标记。两套配色以前是在 ContainerContentChanging 里用
+                                <!-- “能直接 Ctrl+V 粘”的高亮标记：文字/图片条目、且内容还在磁盘上时，
+                                     行左边会出现一根主色竖条。文件条目（视频、压缩包……）没有这根条：
+                                     它们只能粘到支持接收文件的应用里。内容没了的条目同样没有，
+                                     并且整行会变灰、图标换成警告三角。
+                                     竖条外面套了一层定宽 Grid：它一隐藏，后面的图标就会左移，行就对不齐了。 -->
+                                <Grid Width="3" Margin="0,1" VerticalAlignment="Stretch">
+                                    <Border CornerRadius="2" Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                            Visibility="{x:Bind local:MainWindow.DirectMarkVisibility(Readiness)}" />
+                                </Grid>
+                                <!-- 类型标记。两套东西以前是在 ContainerContentChanging 里用
                                      Application.Current.Resources 查出来直接赋值的，而那个字典解析的是
                                      “应用”主题，绕过了本窗口的 RootGrid.RequestedTheme——手动切主题时
-                                     标记颜色不跟着变。现在两个 Border 都写在 XAML 里走 ThemeResource，
-                                     只由 Visibility 决定露哪一个。 -->
-                                <Grid Width="28" Height="28" VerticalAlignment="Top">
-                                    <Border CornerRadius="5" Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                            Visibility="{x:Bind local:MainWindow.TextChipVisibility(Type)}">
-                                        <TextBlock Text="T" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                   FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
-                                    </Border>
+                                     标记颜色不跟着变。现在底色都写在 XAML 里走 ThemeResource，
+                                     只由 Visibility 决定露哪一个；只有按内容类型取的那支画笔走代码
+                                     （MainWindow.KindBrush 看本窗口的 ActualTheme 取色）。 -->
+                                <Grid Grid.Column="1" Width="28" Height="28" VerticalAlignment="Top" Margin="10,0,0,0"
+                                      ToolTipService.ToolTip="{x:Bind ReadinessHint}"
+                                      AutomationProperties.Name="{x:Bind KindLabel}">
                                     <Border CornerRadius="5" Background="{ThemeResource ControlAltFillColorSecondaryBrush}"
-                                            Visibility="{x:Bind local:MainWindow.ImageChipVisibility(Type)}">
-                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8B9;"
-                                                  FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                            Visibility="{x:Bind local:MainWindow.LiveChipVisibility(Readiness)}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{x:Bind TypeGlyph}"
+                                                  FontSize="14" Foreground="{x:Bind local:MainWindow.KindBrush(Kind)}" />
+                                    </Border>
+                                    <!-- 内容已经没了：图标换成警告三角，整行文字置灰 -->
+                                    <Border CornerRadius="5" Background="{ThemeResource ControlAltFillColorTertiaryBrush}"
+                                            Visibility="{x:Bind local:MainWindow.DeadChipVisibility(Readiness)}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7BA;"
+                                                  FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Border>
                                 </Grid>
-                                <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Top">
-                                    <TextBlock Text="{x:Bind PreviewText}" FontSize="12.5" TextWrapping="Wrap"
-                                               MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                <StackPanel Grid.Column="2" Margin="10,0,6,0" VerticalAlignment="Top">
+                                    <!-- 标题写两份而不是绑 Foreground：WinUI 里把 Foreground 设成 null 不是
+                                         “用默认色”，而是“没有画刷”——文字完全不画，只剩图标，
+                                         看上去就是“历史内容全没了”。所以正常行用不带本地 Foreground 的
+                                         那一份（走主题默认色），已失效的行用置灰那一份，
+                                         只由 Visibility 决定露哪一个——和下面的图标同一做法。 -->
+                                    <Grid>
+                                        <TextBlock Text="{x:Bind PreviewText}" FontSize="12.5" TextWrapping="Wrap"
+                                                   Visibility="{x:Bind local:MainWindow.LiveTextVisibility(Readiness)}"
+                                                   MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind PreviewText}" FontSize="12.5" TextWrapping="Wrap"
+                                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                   Visibility="{x:Bind local:MainWindow.DeadTextVisibility(Readiness)}"
+                                                   MaxLines="2" TextTrimming="CharacterEllipsis" />
+                                    </Grid>
                                     <TextBlock Text="{x:Bind MetaText}" FontSize="10.5" Margin="0,3,0,0"
                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                                 </StackPanel>
@@ -129,7 +155,7 @@
                                      AutomationProperties.Name，读屏软件念出来的是 FontIcon 里那个私用区字符。
                                      整组按钮原先用 Opacity=0.7 压暗，高对比度主题下 Opacity 照样生效，
                                      会把系统保证的对比度打掉，所以改成按图标取次级前景色。 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
                                     <Button x:Name="EditButton" Click="EditItem_Click" Tag="{x:Bind}" Padding="5"
                                             Background="Transparent" BorderThickness="0"
                                             AutomationProperties.Name="编辑内容" ToolTipService.ToolTip="编辑内容">

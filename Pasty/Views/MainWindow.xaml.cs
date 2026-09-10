@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Windowing;
 using Windows.Graphics;
@@ -75,7 +76,14 @@ public sealed partial class MainWindow : Window
             HidePanel();
         };
         UpdateThemeIcon();
-        RootGrid.ActualThemeChanged += (s, e) => UpdateThemeIcon();
+        // 图标配色与置灰文字是代码里按当前窗口主题取的（见 KindBrush），模板又是 OneTime 绑定，
+        // 所以主题真的翻了就得重建一次行集合让它们重新求值，否则图标会停在旧主题的颜色上。
+        RootGrid.ActualThemeChanged += (s, e) =>
+        {
+            UpdateThemeIcon();
+            s_highContrast = null; // 主题一变，高对比度开关也要重探
+            UpdateGroups();
+        };
         UpdateCaptionInset();
         // 预留宽度问系统要、不要假定是 138：最大化和系统按钮宽度的变化都会改这个值，
         // 而首次布局完成之前它还是 0。位置/尺寸一变就重算，否则设置按钮会被压在关闭按钮底下
@@ -214,21 +222,100 @@ public sealed partial class MainWindow : Window
             ItemsList.SelectedIndex = 0;
     }
 
-    // ---------- 列表 ----------
+    // ---------- 行内类型标记的可见性与配色 ----------
 
     /// <summary>
-    /// 行内类型标记的显隐。两套底色以前是在 ContainerContentChanging 里
-    /// 用 Application.Current.Resources 查出来直接赋给 Border 的，而那个字典解析的是
-    /// “应用”主题，绕过了本窗口的 RootGrid.RequestedTheme——手动切主题时标记颜色不跟着变，
-    /// 而且其中一处写死了 Colors.White，高对比度主题下对比度不受任何保证。
-    /// 现在两个 Border 都写在 XAML 里走 ThemeResource，这里只决定露哪一个。
+    /// 见 ClipItemTemplate 里的注释：只有“内容还在、且能直接 Ctrl+V 粘进大多数应用”的条目
+    /// （文字 / 链接 / 图片）才有左边那根主色竖条。文件条目与已失效条目都没有。
     /// </summary>
-    public static Visibility TextChipVisibility(ClipType type)
-        => type == ClipType.Text ? Visibility.Visible : Visibility.Collapsed;
+    public static Visibility DirectMarkVisibility(PasteReadiness readiness)
+        => readiness == PasteReadiness.Direct ? Visibility.Visible : Visibility.Collapsed;
 
-    /// <summary>见 <see cref="TextChipVisibility"/>。</summary>
-    public static Visibility ImageChipVisibility(ClipType type)
-        => type == ClipType.Text ? Visibility.Collapsed : Visibility.Visible;
+    /// <summary>内容正常的类型图标（按内容类型上色）。见 <see cref="DirectMarkVisibility"/>。</summary>
+    public static Visibility LiveChipVisibility(PasteReadiness readiness)
+        => readiness == PasteReadiness.Unavailable ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>内容已经没了：换成灰底的警告三角。见 <see cref="DirectMarkVisibility"/>。</summary>
+    public static Visibility DeadChipVisibility(PasteReadiness readiness)
+        => readiness == PasteReadiness.Unavailable ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>标题的两份写法：正常行走主题默认色，已失效的行走置灰色。见 <see cref="DirectMarkVisibility"/>。</summary>
+    public static Visibility LiveTextVisibility(PasteReadiness readiness)
+        => readiness == PasteReadiness.Unavailable ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>见 <see cref="LiveTextVisibility"/>。</summary>
+    public static Visibility DeadTextVisibility(PasteReadiness readiness)
+        => readiness == PasteReadiness.Unavailable ? Visibility.Visible : Visibility.Collapsed;
+
+    /// <summary>
+    /// 按内容类型取图标画笔。颜色表在 ContentKindInfo.Color，亮/深各一档，
+    /// 取哪一档看的是**本窗口**的 RootGrid.ActualTheme。不能走 Application.Current.Resources
+    /// 那类“应用”级解析：本应用只设窗口级的 RequestedTheme，应用字典解析的始终是系统主题，
+    /// 手动切亮/深色时颜色不会跟着变——那正是以前这个标记的 bug。
+    /// 模板是 OneTime 绑定，所以主题真的翻了要靠 UpdateGroups() 重建一次行集合重新求值。
+    ///
+    /// 注意这里**绝不能返回 null**：Foreground 被显式设成 null 不是“用默认色”，而是“没有画刷”，
+    /// 字就直接不画了（上一版就踩在这个上面：列表只剩图标，看不出历史还在）。
+    /// 高对比度下取系统前景色，取不到就退回当前主题的调色板，总之必须是个真画笔。
+    /// </summary>
+    public static SolidColorBrush KindBrush(ContentKind kind)
+    {
+        var dark = Current?.RootGrid?.ActualTheme == ElementTheme.Dark;
+        if (HighContrastOn)
+        {
+            var hc = HighContrastTextBrush();
+            if (hc != null) return hc;
+        }
+        return CachedBrush(kind.Color(dark));
+    }
+
+    /// <summary>高对比度主题下的前景色（图标要跟着系统走，自己配色会把系统保证的对比度打掉）。</summary>
+    private static SolidColorBrush? HighContrastTextBrush()
+    {
+        try
+        {
+            var c = new Windows.UI.ViewManagement.UISettings()
+                .GetColorValue(Windows.UI.ViewManagement.UIColorType.Foreground);
+            return CachedBrush(Windows.UI.Color.FromArgb(c.A, c.R, c.G, c.B));
+        }
+        catch { return null; } // 取不到就退回调色板，不能退成 null
+    }
+
+    /// <summary>
+    /// 系统是否开着高对比度主题。WinUI 3 的 ElementTheme 只有 Light/Dark/Default，从元素上问不出来，
+    /// 只能去问 AccessibilitySettings。取不到（比如这个 WinRT 类在某些环境不可用）就当没开：
+    /// 图标配色跟着系统走，判错只会让颜色不太对，不会丢任何信息（文字一律走主题色，见模板里的注释）。
+    /// 值在主题事件上重探一次，不要永久缓存。
+    /// </summary>
+    private static bool HighContrastOn
+    {
+        get
+        {
+            if (s_highContrast == null)
+            {
+                try { s_highContrast = new Windows.UI.ViewManagement.AccessibilitySettings().HighContrast; }
+                catch { s_highContrast = false; }
+            }
+            return s_highContrast.Value;
+        }
+    }
+
+    private static bool? s_highContrast;
+
+    /// <summary>画笔按颜色复用：一次重建要为几百行取色，不能每行 new 一个。</summary>
+    private static SolidColorBrush? CachedBrush(Windows.UI.Color color)
+    {
+        if (!s_brushCache.TryGetValue(color, out var brush))
+        {
+            brush = new SolidColorBrush(color);
+            s_brushCache[color] = brush;
+        }
+        return brush;
+    }
+
+    private static readonly Dictionary<Windows.UI.Color, SolidColorBrush> s_brushCache = new();
+
+    // ---------- 列表 ----------
 
     private void UpdateGroups()
     {
@@ -293,8 +380,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// 空列表提示。「一条历史都没有」和「搜索没命中」要用不同的文案：
-    /// 混成一句会让人以为历史被清空了。搜索只匹配文字条目（见 MainViewModel.RebuildGroups），
-    /// 所以没命中时顺带说明这一点。
+    /// 混成一句会让人以为历史被清空了。搜索匹配文字条目的内容与文件条目的文件名。
     /// </summary>
     private void UpdateListEmptyHint()
     {
@@ -304,8 +390,8 @@ public sealed partial class MainWindow : Window
             return;
         }
         ListEmptyHint.Text = string.IsNullOrWhiteSpace(App.ViewModel.Filter)
-            ? "还没有剪贴板历史。复制任意文字或图片，这里就会出现。"
-            : $"没有匹配「{App.ViewModel.Filter}」的记录。搜索只查找文字条目。";
+            ? "还没有剪贴板历史。复制文字、图片或文件，这里就会出现。"
+            : $"没有匹配「{App.ViewModel.Filter}」的记录。搜索会查文字内容与文件名。";
         ListEmptyHint.Visibility = Visibility.Visible;
     }
 
@@ -354,33 +440,64 @@ public sealed partial class MainWindow : Window
     private void UpdatePreview(ClipItem item)
     {
         ExitEditMode();
+        TextPreviewHost.Visibility = Visibility.Collapsed;
+        ImagePreviewHost.Visibility = Visibility.Collapsed;
         EmptyHint.Visibility = Visibility.Collapsed;
-        PreviewMeta.Text = item.MetaText;
-        if (item.Type == ClipType.Text)
+        EmptyHint.Text = EmptyHintDefault;
+
+        // 预览底部把“能不能粘”说清楚：列表里只有一根竖条，要点到这一行才能看到完整原因
+        PreviewMeta.Text = $"{item.MetaText} — {item.ReadinessHint}";
+        // 内容已经不在了就写不进剪贴板，粘/复制按下去只会静默失败，不如直接禁用
+        CopyButton.IsEnabled = item.CanWriteToClipboard;
+        PasteButton.IsEnabled = item.CanWriteToClipboard;
+        ToolTipService.SetToolTip(PasteButton, item.CanWriteToClipboard ? null : item.ReadinessHint);
+        ToolTipService.SetToolTip(CopyButton, item.CanWriteToClipboard ? null : item.ReadinessHint);
+
+        switch (item.Type)
         {
-            TextPreviewHost.Visibility = Visibility.Visible;
-            ImagePreviewHost.Visibility = Visibility.Collapsed;
-            PreviewTextBlock.Text = item.Text;
-            EditPreviewButton.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            TextPreviewHost.Visibility = Visibility.Collapsed;
-            ImagePreviewHost.Visibility = Visibility.Visible;
-            PreviewImage.Source = item.ImagePath != null
-                ? new BitmapImage(new Uri(item.ImagePath))
-                : null;
-            EditPreviewButton.Visibility = Visibility.Collapsed;
+            case ClipType.Text:
+                TextPreviewHost.Visibility = Visibility.Visible;
+                PreviewTextBlock.Text = item.Text;
+                EditPreviewButton.Visibility = Visibility.Visible;
+                break;
+
+            case ClipType.Image when item.ImagePath != null && File.Exists(item.ImagePath):
+                ImagePreviewHost.Visibility = Visibility.Visible;
+                PreviewImage.Source = new BitmapImage(new Uri(item.ImagePath!));
+                EditPreviewButton.Visibility = Visibility.Collapsed;
+                break;
+
+            case ClipType.File:
+                // 文件条目没有“内容”可看，展示路径清单（FullPreviewText 会把已经不在了的那几个标出来）
+                TextPreviewHost.Visibility = Visibility.Visible;
+                PreviewTextBlock.Text = item.FullPreviewText;
+                EditPreviewButton.Visibility = Visibility.Collapsed;
+                break;
+
+            default:
+                // 图片文件被清掉了：只剩一个空图片框会让人以为在加载，直接说一句人话
+                PreviewImage.Source = null;
+                EditPreviewButton.Visibility = Visibility.Collapsed;
+                EmptyHint.Text = item.ReadinessHint;
+                EmptyHint.Visibility = Visibility.Visible;
+                break;
         }
     }
+
+    /// <summary>与 MainWindow.xaml 里 EmptyHint 的默认文案保持一致。</summary>
+    private const string EmptyHintDefault = "选择左侧条目查看完整内容";
 
     private void ShowEmptyPreview()
     {
         ExitEditMode();
         TextPreviewHost.Visibility = Visibility.Collapsed;
         ImagePreviewHost.Visibility = Visibility.Collapsed;
+        EmptyHint.Text = EmptyHintDefault;
         EmptyHint.Visibility = Visibility.Visible;
         PreviewMeta.Text = string.Empty;
+        // 没有选中条目时两个按钮都没对象可粘，跟着置灰
+        CopyButton.IsEnabled = false;
+        PasteButton.IsEnabled = false;
     }
 
     private async void CopyPreview_Click(object sender, RoutedEventArgs e)

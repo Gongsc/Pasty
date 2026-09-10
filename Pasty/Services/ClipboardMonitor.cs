@@ -7,7 +7,7 @@ using Pasty.Models;
 
 namespace Pasty.Services;
 
-/// <summary>监听系统剪贴板变化，产出 ClipItem（文本/图片）。</summary>
+/// <summary>监听系统剪贴板变化，产出 ClipItem（文本/图片/文件）。</summary>
 public sealed class ClipboardMonitor
 {
     public event Action<ClipItem>? ClipboardChanged;
@@ -78,7 +78,7 @@ public sealed class ClipboardMonitor
         return null;
     }
 
-    /// <summary>读一次剪贴板；内容既不是文本也不是图片时返回 null。失败向上抛，由调用方决定是否重试。</summary>
+    /// <summary>读一次剪贴板；既不是文本、也不是图片、也不是文件时返回 null。失败向上抛，由调用方决定是否重试。</summary>
     private static async Task<ClipItem?> ReadOnceAsync()
     {
         var content = Clipboard.GetContent();
@@ -99,7 +99,14 @@ public sealed class ClipboardMonitor
                 ? null
                 : new ClipItem { Type = ClipType.Image, ImagePath = StorageService.SaveImage(png) };
         }
-        return null;
+        // 文件（视频、音频、压缩包、文件夹……）排在最后：浏览器“复制网页图片”之类
+        // 会同时留下位图和临时文件路径，按图片记才不会存一个随时会被清掉的临时文件路径。
+        // 这里走 Win32 而不是 DataPackage.GetStorageItemsAsync()：后者要为每个路径构造
+        // shell item，慢且不稳定的时候会把 UI 线程的消息泵堵在那里（键盘钩子靠它）。
+        var files = Win32.ReadClipboardFileDrop();
+        return files.Count > 0
+            ? new ClipItem { Type = ClipType.File, FilePaths = files }
+            : null;
     }
 
     /// <summary>

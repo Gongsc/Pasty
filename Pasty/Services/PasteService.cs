@@ -19,6 +19,14 @@ public static class PasteService
             return;
         }
         _busy = true;
+        // 内容已经不在了（源文件被删、U 盘拔了、图片文件丢了）就什么都别做：
+        // 既不该把用户原本的剪贴板清空，也不值得为一次注定失败的粘贴抢前台窗口。
+        if (!item.CanWriteToClipboard)
+        {
+            Trace.Log($"paste 条目内容已失效，取消 item={item.Type}");
+            _busy = false;
+            return;
+        }
         // 目标必须是仍然存活、可见且不属于本进程的窗口。否则 ForceForeground 会静默失败，
         // 而 SendInput 只认“当前前台窗口”，Ctrl+V 就会落到 Pasty 自己或某个无关窗口里。
         var canSendKeys = Win32.IsPasteTarget(targetHwnd);
@@ -76,10 +84,15 @@ public static class PasteService
             Clipboard.SetContent(package);
             await FlushWithRetryAsync();
         }
-        else if (item.ImagePath != null && File.Exists(item.ImagePath))
+        else if (item.Type == ClipType.Image)
         {
             // 图片用 Win32 写标准 CF_DIB + PNG 格式，兼容所有应用的 Ctrl+V
-            await WriteImageClipboardAsync(item.ImagePath);
+            if (item.ImagePath != null && File.Exists(item.ImagePath))
+                await WriteImageClipboardAsync(item.ImagePath);
+        }
+        else if (item.Type == ClipType.File)
+        {
+            await WriteFileDropClipboardAsync(item);
         }
         else
         {
@@ -87,6 +100,52 @@ public static class PasteService
         }
         ClipboardMonitor.MarkSelfWrite();
     }
+
+    /// <summary>
+    /// 写 CF_HDROP（文件列表）。只要有一个源文件已经不在，就整个不写：
+    /// 把不存在的路径塞进剪贴板，目标应用只会报“找不到文件”，还不如保持用户原有的内容。
+    /// </summary>
+    private static async Task WriteFileDropClipboardAsync(ClipItem item)
+    {
+        var paths = item.FilePaths;
+        if (paths.Count == 0) return;
+        foreach (var p in paths)
+        {
+            try
+            {
+                if (!File.Exists(p) && !Directory.Exists(p)) return;
+            }
+            catch { return; } // 路径本身非法（断开的网络盘之类）
+        }
+
+        var data = Win32.BuildDropFiles(paths);
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            if (Win32.OpenClipboard(IntPtr.Zero))
+            {
+                try
+                {
+                    Win32.EmptyClipboard();
+                    var ok = Win32.SetClipboardBytes(Win32.CF_HDROP, data);
+                    // 必须一并写 Preferred DropEffect。不写时资源管理器粘过去可能按“移动”理解，
+                    // 那会把用户的原文件搬走——一个剪贴板管理器最不能犯的就是这个错。
+                    ok &= Win32.SetClipboardBytes(s_preferredDropEffect, PreferredDropEffectCopy);
+                    if (ok) return;
+                }
+                finally
+                {
+                    Win32.CloseClipboard();
+                }
+            }
+            await Task.Delay(80); // 剪贴板被占用，稍后重试
+        }
+    }
+
+    /// <summary>CFSTR_PREFERREDDROPEFFECT：4 字节的 DROPEFFECT 位掩码，5 = DROPEFFECT_COPY。</summary>
+    private static readonly byte[] PreferredDropEffectCopy = { 5, 0, 0, 0 };
+
+    private static readonly uint s_preferredDropEffect =
+        Win32.RegisterClipboardFormatW("Preferred DropEffect");
 
     private static async Task FlushWithRetryAsync()
     {
