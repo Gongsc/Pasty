@@ -30,6 +30,7 @@ public partial class App : Application
 
     private MainWindow? _mainWindow;
     private SettingsWindow? _settingsWindow;
+    private AboutWindow? _aboutWindow;
     private RetentionService _retention = null!;
     private SingleInstanceService _singleInstance = null!;
 
@@ -76,6 +77,7 @@ public partial class App : Application
         var tray = new TrayIconService(MessageWindow);
         tray.OpenRequested += () => MainWindow.Current?.ShowAsWindow();
         tray.SettingsRequested += OpenSettingsWindow;
+        tray.AboutRequested += OpenAboutWindow;
         tray.ExitRequested += Exit;
 
         ClipboardMonitor.ClipboardChanged += async item =>
@@ -108,6 +110,17 @@ public partial class App : Application
         ApplyTheme();
     }
 
+    public void OpenAboutWindow()
+    {
+        if (_aboutWindow == null)
+        {
+            _aboutWindow = new AboutWindow();
+            _aboutWindow.Closed += (s, e) => _aboutWindow = null;
+        }
+        _aboutWindow.Activate();
+        ApplyTheme();
+    }
+
     public static void ApplyTheme()
     {
         var theme = Settings.Theme switch
@@ -118,6 +131,8 @@ public partial class App : Application
         };
         MainWindow.Current?.ApplyTheme(theme);
         (Current as App)?._settingsWindow?.ApplyTheme(theme);
+        (Current as App)?._aboutWindow?.ApplyTheme(theme);
+        TrayIconService.ApplyTheme(theme);
     }
 
     public new static void Exit()

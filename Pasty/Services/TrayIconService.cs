@@ -1,14 +1,14 @@
 using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.UI.Xaml;
 using Microsoft.Win32;
+using Pasty.Views;
 
 namespace Pasty.Services;
 
-/// <summary>系统托盘图标：双击打开面板，右键菜单（打开/设置/退出）。</summary>
+/// <summary>系统托盘图标：双击打开面板，右键菜单（打开/设置/关于/退出）。</summary>
 public sealed class TrayIconService
 {
-    private const uint IdOpen = 1, IdSettings = 2, IdExit = 3;
-
     private static IntPtr s_hwnd;
     private static bool s_added;
     private static uint s_taskbarCreatedMsg;
@@ -19,9 +19,11 @@ public sealed class TrayIconService
     private static bool s_iconOwned;
     /// <summary>s_icon 取自哪一套配色，用于判断系统主题变化后是否需要换图。</summary>
     private static bool s_iconForLightTheme;
+    private static TrayMenuWindow? s_menuWindow;
 
     public event Action? OpenRequested;
     public event Action? SettingsRequested;
+    public event Action? AboutRequested;
     public event Action? ExitRequested;
 
     public TrayIconService(MessageWindow messageWindow)
@@ -118,6 +120,8 @@ public sealed class TrayIconService
 
     public static void Remove()
     {
+        s_menuWindow?.Close();
+        s_menuWindow = null;
         if (!s_added) return;
         var data = new Win32.NOTIFYICONDATA
         {
@@ -162,29 +166,27 @@ public sealed class TrayIconService
 
     private void ShowMenu()
     {
-        var menu = Win32.CreatePopupMenu();
-        Win32.AppendMenuW(menu, Win32.MF_STRING, new IntPtr(IdOpen), "打开面板");
-        Win32.AppendMenuW(menu, Win32.MF_STRING, new IntPtr(IdSettings), "设置");
-        Win32.AppendMenuW(menu, Win32.MF_SEPARATOR, IntPtr.Zero, "");
-        Win32.AppendMenuW(menu, Win32.MF_STRING, new IntPtr(IdExit), "退出");
-        Win32.GetCursorPos(out var p);
-
-        // 菜单的消息循环只服务于前台窗口：owner 不在前台时，点击别处或按 Esc
-        // 都不会让菜单消失，它会一直挂在屏幕上，直到再点它自己一次。
-        var owner = App.MessageWindow.Handle;
-        Win32.ForceForeground(owner);
-        var cmd = Win32.TrackPopupMenu(menu,
-            Win32.TPM_LEFTALIGN | Win32.TPM_RIGHTBUTTON | Win32.TPM_RETURNCMD,
-            p.X, p.Y, 0, owner, IntPtr.Zero);
-        // 菜单收起后 owner 还欠一条消息才肯把菜单模式彻底退干净（否则下一次右键
-        // 首次点击会被吞掉），投一条空消息把消息循环踢一下即可
-        Win32.PostMessageW(owner, Win32.WM_NULL, IntPtr.Zero, IntPtr.Zero);
-        Win32.DestroyMenu(menu);
-        switch ((uint)cmd)
+        s_menuWindow?.Close();
+        var menu = new TrayMenuWindow(
+            () => OpenRequested?.Invoke(),
+            () => SettingsRequested?.Invoke(),
+            () => AboutRequested?.Invoke(),
+            () => ExitRequested?.Invoke());
+        s_menuWindow = menu;
+        menu.Closed += (_, _) =>
         {
-            case IdOpen: OpenRequested?.Invoke(); break;
-            case IdSettings: SettingsRequested?.Invoke(); break;
-            case IdExit: ExitRequested?.Invoke(); break;
-        }
+            if (ReferenceEquals(s_menuWindow, menu)) s_menuWindow = null;
+        };
+        menu.ApplyTheme(CurrentTheme());
+        menu.ShowAtCursor();
     }
+
+    public static void ApplyTheme(ElementTheme theme) => s_menuWindow?.ApplyTheme(theme);
+
+    private static ElementTheme CurrentTheme() => App.Settings.Theme switch
+    {
+        1 => ElementTheme.Light,
+        2 => ElementTheme.Dark,
+        _ => ElementTheme.Default,
+    };
 }

@@ -81,9 +81,11 @@ public sealed partial class MainWindow : Window
         RootGrid.ActualThemeChanged += (s, e) =>
         {
             UpdateThemeIcon();
+            WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
             s_highContrast = null; // 主题一变，高对比度开关也要重探
             UpdateGroups();
         };
+        WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
         UpdateCaptionInset();
         // 预留宽度问系统要、不要假定是 138：最大化和系统按钮宽度的变化都会改这个值，
         // 而首次布局完成之前它还是 0。位置/尺寸一变就重算，否则设置按钮会被压在关闭按钮底下
@@ -445,8 +447,10 @@ public sealed partial class MainWindow : Window
         EmptyHint.Visibility = Visibility.Collapsed;
         EmptyHint.Text = EmptyHintDefault;
 
-        // 预览底部把“能不能粘”说清楚：列表里只有一根竖条，要点到这一行才能看到完整原因
-        PreviewMeta.Text = $"{item.MetaText} — {item.ReadinessHint}";
+        PreviewSource.Text = item.SourceText;
+        PreviewType.Text = item.KindLabel;
+        PreviewSize.Text = item.SizeDetailText;
+        PreviewDate.Text = item.DateDetailText;
         // 内容已经不在了就写不进剪贴板，粘/复制按下去只会静默失败，不如直接禁用
         CopyButton.IsEnabled = item.CanWriteToClipboard;
         PasteButton.IsEnabled = item.CanWriteToClipboard;
@@ -494,7 +498,10 @@ public sealed partial class MainWindow : Window
         ImagePreviewHost.Visibility = Visibility.Collapsed;
         EmptyHint.Text = EmptyHintDefault;
         EmptyHint.Visibility = Visibility.Visible;
-        PreviewMeta.Text = string.Empty;
+        PreviewSource.Text = string.Empty;
+        PreviewType.Text = string.Empty;
+        PreviewSize.Text = string.Empty;
+        PreviewDate.Text = string.Empty;
         // 没有选中条目时两个按钮都没对象可粘，跟着置灰
         CopyButton.IsEnabled = false;
         PasteButton.IsEnabled = false;

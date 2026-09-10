@@ -16,7 +16,6 @@ internal static class Win32
     public const uint WM_HOTKEY = 0x0312;
     public const uint WM_APP_TRAY = 0x8100;
     public const uint WM_COMMAND = 0x0111;
-    public const uint WM_NULL = 0x0000;
     public const uint WM_KEYDOWN = 0x0100;
     public const uint WM_SYSKEYDOWN = 0x0104;
     public const uint WM_KEYUP = 0x0101;
@@ -341,24 +340,8 @@ internal static class Win32
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     public static extern uint RegisterWindowMessageW(string lpString);
 
-    [DllImport("user32.dll")]
-    public static extern IntPtr CreatePopupMenu();
-
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    public static extern bool AppendMenuW(IntPtr hMenu, uint uFlags, IntPtr uIDNewItem, string lpNewItem);
-
-    public const uint MF_STRING = 0x0, MF_SEPARATOR = 0x800;
-
-    [DllImport("user32.dll")]
-    public static extern uint TrackPopupMenu(IntPtr hMenu, uint uFlags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
-
-    public const uint TPM_LEFTALIGN = 0x0, TPM_RIGHTBUTTON = 0x2, TPM_RETURNCMD = 0x100;
-
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool PostMessageW(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    public static extern bool DestroyMenu(IntPtr hMenu);
 
     [DllImport("user32.dll")]
     public static extern bool DestroyIcon(IntPtr hIcon);

@@ -12,12 +12,12 @@ WinUI 3 (Windows App SDK 1.6) + .NET 8 开发的本地剪切板历史管理工�
 - **快捷键唤出**：`Ctrl+Shift+V` 在鼠标位置弹出轻量面板；`Enter` 粘贴选中项，`Esc` 关闭，`↑↓` 选择
 - **覆盖系统 Ctrl+V**（可在设置中关闭）：开启后按 `Ctrl+V` 直接粘贴历史第一条（已失效的条目会被跳过）
 - **粘贴第一条快捷键**：`Ctrl+Alt+V` 无需打开面板直接粘贴最近一条
-- **全文预览**：选中条目在右侧显示完整内容，支持滚动、复制、粘贴、编辑；文件条目显示路径清单，底部说明这条能不能粘、为什么
+- **全文预览**：选中条目在右侧显示完整内容，支持滚动、复制、粘贴、编辑；文件条目显示路径清单，底部显示来源、类型、大小与日期
 - **编辑**：文本条目可修改内容
 - **置顶**：置顶条目排在最前，不受保存时长影响
 - **保存时长**：永久 / 7 / 30 / 90 / 365 天，超期未置顶自动清理；可设最大条数（清理与删除都只删 Pasty 自己存的图片，绝不删用户目录里的原文件）
 - **亮暗色切换**：标题栏一键切换，设置页可选 跟随系统 / 浅色 / 深色
-- **托盘图标**：双击打开面板，右键菜单可打开/设置/退出；关闭窗口仅隐藏到托盘
+- **托盘图标**：双击打开面板，右键菜单可打开/设置/关于/退出；关于窗口可手动检查 GitHub Release 更新；关闭窗口仅隐藏到托盘
 
 ## 构建与运行
 
@@ -32,7 +32,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 - `Models/`：ClipItem 条目（文字 / 图片 / 文件）、ContentKind 类型图标与配色、AppSettings 设置
 - `Services/`：Win32 互操作、消息窗口、剪贴板监听、热键/钩子、前台窗口跟踪、粘贴、存储、过期清理、自启、托盘
-- `Views/`：MainWindow（历史列表 + 全文预览）、SettingsWindow（独立设置，底部显示版本号）
+- `Views/`：MainWindow（历史列表 + 全文预览）、SettingsWindow（独立设置）、AboutWindow（版本与更新）
 - `doc/`：PLAN.md（初始实施计划）与 icon-preview.html / ui-design.png / ui-mockup.html（设计稿），均为历史参考
 - `.github/workflows/build.yml`：push / PR 自动构建，推 `v*` 标签时把 zip 发布到 GitHub Release
 
@@ -43,5 +43,4 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 ## 许可
 
-GNU GPL v3（全文见 `LICENSE`）。数据全部存在本机 `%LOCALAPPDATA%\Pasty`，程序不联网。
-
+GNU GPL v3（全文见 `LICENSE`）。数据全部存在本机 `%LOCALAPPDATA%\Pasty`；仅在用户主动点击“检查更新”时访问 GitHub。

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics.Imaging;
@@ -39,16 +40,40 @@ public sealed class ClipboardMonitor
     {
         if (msg != Win32.WM_CLIPBOARDUPDATE || Suspended) return false;
         if (Win32.GetClipboardSequenceNumber() <= s_selfWriteSeq) return false; // 自己写入引发的通知
-        _ = ReadClipboardAsync();
+        // 异步读取与重试期间前台窗口可能已经切走，来源窗口必须在收到通知这一刻记下。
+        // 这里只取一个句柄，进程查询留到异步读取完成后，避免在 UI 消息回调里多做工作。
+        var sourceWindow = Win32.GetForegroundWindow();
+        _ = ReadClipboardAsync(sourceWindow);
         return false;
     }
 
-    private async Task ReadClipboardAsync()
+    private async Task ReadClipboardAsync(IntPtr sourceWindow)
     {
         var item = await ReadWithRetryAsync();
         if (item == null) return;
+        item.Source = GetSource(sourceWindow);
         try { ClipboardChanged?.Invoke(item); }
         catch (Exception ex) { Trace.Log($"clipboard 通知处理失败: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// 来源只保存进程名，不保存窗口标题。标题常带文档名、网页标题等用户内容，
+    /// 既不适合作为稳定的应用标识，也不该被剪贴板历史额外持久化。
+    /// </summary>
+    private static string GetSource(IntPtr hwnd)
+    {
+        try
+        {
+            if (hwnd == IntPtr.Zero) return string.Empty;
+            Win32.GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid == 0) return string.Empty;
+            using var process = Process.GetProcessById((int)pid);
+            return process.ProcessName;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     /// <summary>

@@ -53,6 +53,7 @@ public class MainViewModel
 
             // 相同内容：上移并刷新时间
             All.Remove(existing);
+            if (!string.IsNullOrWhiteSpace(item.Source)) existing.Source = item.Source;
             existing.LastUsedAt = DateTime.Now;
             All.Insert(0, existing);
         }

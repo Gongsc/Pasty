@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目
 
-Pasty —— Windows 剪切板历史管理器。WinUI 3（Windows App SDK 1.6，**unpackaged**：`WindowsPackageType=None` + 自包含）+ .NET 8 + 大量 Win32 P/Invoke。数据全部本地，无网络访问。
+Pasty —— Windows 剪切板历史管理器。WinUI 3（Windows App SDK 1.6，**unpackaged**：`WindowsPackageType=None` + 自包含）+ .NET 8 + 大量 Win32 P/Invoke。数据全部本地；仅在用户主动点击“检查更新”时访问 GitHub。
 
 ## 构建与运行
 

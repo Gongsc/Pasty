@@ -38,7 +38,10 @@ public sealed partial class SettingsWindow : Window
         AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
         AppWindow.Resize(Scaled(640, 780));
-        AboutText.Text = $"Pasty v{App.Version} · 数据全部存在本机，不联网 · GNU GPL v3";
+        WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
+        RootGrid.ActualThemeChanged += (s, e) =>
+            WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
+        AboutText.Text = $"Pasty v{App.Version} · 数据全部存在本机，仅检查更新时联网 · GNU GPL v3";
 
         _loading = true;
         SelectByTag(RetentionCombo, App.Settings.RetentionDays);

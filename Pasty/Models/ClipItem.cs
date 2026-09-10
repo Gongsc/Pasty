@@ -9,6 +9,9 @@ public class ClipItem
     public string Text { get; set; } = string.Empty;
     public string? ImagePath { get; set; }
 
+    /// <summary>复制内容时位于前台的应用进程名。旧索引没有这个字段，界面会显示“未知”。</summary>
+    public string Source { get; set; } = string.Empty;
+
     /// <summary>
     /// 文件条目的原始路径。Pasty 只记路径、不复制文件本体（一段视频可能就是几个 GB），
     /// 因此这些路径指向的是**用户自己的文件**：删除条目、过期清理、去重都绝不能碰它们。
@@ -43,6 +46,10 @@ public class ClipItem
 
     [JsonIgnore] public string KindLabel => Kind.Label();
     [JsonIgnore] public string TypeGlyph => Kind.Glyph();
+
+    [JsonIgnore] public string SourceText => string.IsNullOrWhiteSpace(Source) ? "未知" : Source;
+    [JsonIgnore] public string SizeDetailText { get { Probe(); return _sizes.Length > 0 ? _sizes : "—"; } }
+    [JsonIgnore] public string DateDetailText => LastUsedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
     [JsonIgnore]
     public string PreviewText => Type switch
