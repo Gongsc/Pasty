@@ -33,7 +33,8 @@ RestartApplications=no
 AppMutex=Pasty_SingleInstance
 
 [Languages]
-Name: "zhcn"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+; 简体中文不是 Inno Setup 默认附带的语言，CI 会把固定版本下载到脚本目录。
+Name: "zhcn"; MessagesFile: ".\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]

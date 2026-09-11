@@ -61,6 +61,17 @@ jobs:
             }
           }
 
+          # 简体中文是 Inno Setup 的外部翻译，不随 GitHub Runner 预装版本提供。
+          # 固定提交并校验内容，避免上游更新让同一份源码产生不同安装包。
+          $languageFile = Join-Path $env:GITHUB_WORKSPACE 'installer\ChineseSimplified.isl'
+          $languageUri = 'https://raw.githubusercontent.com/kira-96/Inno-Setup-Chinese-Simplified-Translation/1ff90acc4ed4aee82b1cda43253243deee3daed4/ChineseSimplified.isl'
+          Invoke-WebRequest -Uri $languageUri -OutFile $languageFile
+          $expectedLanguageHash = 'BF0751FA176569C6FAA2F6E17ED2734617BEF325D5CC06EAE030FDD0258EE778'
+          $actualLanguageHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $languageFile).Hash
+          if ($actualLanguageHash -ne $expectedLanguageHash) {
+            throw "简体中文语言文件校验失败：$actualLanguageHash"
+          }
+
           $installerDir = Join-Path $env:GITHUB_WORKSPACE 'installer-output'
           New-Item -ItemType Directory -Force -Path $installerDir | Out-Null
           $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
