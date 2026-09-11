@@ -96,8 +96,10 @@ public partial class App : Application
         _retention.Start();
 
         _mainWindow = new MainWindow();
-        _mainWindow.Activate();
         ApplyTheme();
+        // 首次启动只驻留托盘，不激活主窗口。主窗口实例仍需提前创建：托盘菜单、
+        // 唤出快捷键和第二次启动的唤醒消息都复用它，避免每次显示时重新装配事件。
+        Trace.Log("启动完成，已驻留托盘");
     }
 
     public void OpenSettingsWindow()

@@ -63,6 +63,8 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 ### 主窗口是一个窗口的两种形态
 `MainWindow._panelMode`：`ShowAsPanel()` 缩到 440×520 并定位到光标处，`ShowAsWindow()` 恢复 1060×680（少了这次 Resize，托盘打开的窗口会一直是面板宽度）。尺寸常量是**逻辑像素**，`AppWindow.Resize/Move` 收的是**物理像素**，必须经 `Scaled()` 按 `GetDpiForWindow` 换算。定位用 `FitInto` 而非 `Math.Clamp`（工作区比窗口还小时 `Clamp` 会因 min > max 抛异常）。关闭按钮被 `AppWindow.Closing` 拦下改为隐藏到托盘。
 
+应用首次启动只驻留托盘：`App.OnLaunched` 会创建 `MainWindow` 供托盘、快捷键和单实例唤醒复用，但不能调用 `Activate()`。用户从托盘打开、按唤出快捷键或再次运行程序时才显示窗口。
+
 主题走 `RootGrid.RequestedTheme`（每窗口），`App.ApplyTheme()` 统一分发到主窗口与设置窗口。
 
 ### 列表行的类型图标与“能不能粘”
