@@ -35,13 +35,15 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsRetentionTitle" Text="保存时长" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsRetentionDescription" Text="超过时长的未置顶历史将自动删除，置顶项不受影响" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="RetentionCombo" x:Uid="SettingsRetentionCombo" AutomationProperties.Name="保存时长" SelectionChanged="Retention_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsRetentionTitle" Text="保存时长" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsRetentionDescription" Text="超过时长的未置顶历史将自动删除，置顶项不受影响" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="RetentionCombo" x:Uid="SettingsRetentionCombo" AutomationProperties.Name="保存时长" SelectionChanged="Retention_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <ComboBoxItem x:Uid="RetentionForever" Content="永久保存" Tag="0" />
                                 <ComboBoxItem x:Uid="Retention7" Content="7 天" Tag="7" />
                                 <ComboBoxItem x:Uid="Retention30" Content="30 天" Tag="30" />
@@ -52,13 +54,15 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsMaxItemsTitle" Text="最大条数" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsMaxItemsDescription" Text="历史数量上限，超出时淘汰最旧的未置顶项" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="MaxItemsCombo" x:Uid="SettingsMaxItemsCombo" AutomationProperties.Name="最大条数" SelectionChanged="MaxItems_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsMaxItemsTitle" Text="最大条数" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsMaxItemsDescription" Text="历史数量上限，超出时淘汰最旧的未置顶项" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="MaxItemsCombo" x:Uid="SettingsMaxItemsCombo" AutomationProperties.Name="最大条数" SelectionChanged="MaxItems_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <ComboBoxItem Content="100" Tag="100" />
                                 <ComboBoxItem Content="500" Tag="500" />
                                 <ComboBoxItem Content="1000" Tag="1000" />
@@ -76,35 +80,41 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsShowHotkeyTitle" Text="唤出面板快捷键" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsShowHotkeyDescription" Text="随时唤出剪贴板历史面板" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="ShowHotkeyCombo" x:Uid="SettingsShowHotkeyCombo" AutomationProperties.Name="唤出面板快捷键" SelectionChanged="ShowHotkey_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="170" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsShowHotkeyTitle" Text="唤出面板快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsShowHotkeyDescription" Text="随时唤出剪贴板历史面板" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="ShowHotkeyCombo" x:Uid="SettingsShowHotkeyCombo" AutomationProperties.Name="唤出面板快捷键" SelectionChanged="ShowHotkey_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsPasteHotkeyTitle" Text="粘贴第一条快捷键" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsPasteHotkeyDescription" Text="无需打开面板，直接把最近一条粘贴到当前窗口" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="PasteHotkeyCombo" x:Uid="SettingsPasteHotkeyCombo" AutomationProperties.Name="粘贴第一条快捷键" SelectionChanged="PasteHotkey_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="170" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsPasteHotkeyTitle" Text="粘贴第一条快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsPasteHotkeyDescription" Text="无需打开面板，直接把最近一条粘贴到当前窗口" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="PasteHotkeyCombo" x:Uid="SettingsPasteHotkeyCombo" AutomationProperties.Name="粘贴第一条快捷键" SelectionChanged="PasteHotkey_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsOverrideTitle" Text="覆盖系统 Ctrl+V" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsOverrideDescription" Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ToggleSwitch x:Name="OverrideToggle" x:Uid="SettingsOverrideToggle" AutomationProperties.Name="覆盖系统 Ctrl+V" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsOverrideTitle" Text="覆盖系统 Ctrl+V" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsOverrideDescription" Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ToggleSwitch x:Name="OverrideToggle" x:Uid="SettingsOverrideToggle" AutomationProperties.Name="覆盖系统 Ctrl+V" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
                         <InfoBar x:Name="HotkeyWarning" x:Uid="SettingsHotkeyWarning" Severity="Warning" IsOpen="False" IsClosable="False"
                                  Title="快捷键未生效" Margin="0,6,0,4" />
@@ -119,13 +129,15 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsLanguageTitle" Text="语言" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsLanguageDescription" Text="界面语言；重新启动 Pasty 后生效" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="LanguageCombo" x:Uid="SettingsLanguageCombo" AutomationProperties.Name="语言" SelectionChanged="Language_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsLanguageTitle" Text="语言" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsLanguageDescription" Text="界面语言；重新启动 Pasty 后生效" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="LanguageCombo" x:Uid="SettingsLanguageCombo" AutomationProperties.Name="语言" SelectionChanged="Language_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <ComboBoxItem x:Uid="LanguageChinese" Content="简体中文" Tag="zh-CN" />
                                 <ComboBoxItem x:Uid="LanguageEnglish" Content="English" Tag="en-US" />
                             </ComboBox>
@@ -134,24 +146,28 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsStartupTitle" Text="开机自动启动" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsStartupDescription" Text="登录 Windows 后在后台运行" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ToggleSwitch x:Name="StartupToggle" x:Uid="SettingsStartupToggle" AutomationProperties.Name="开机自动启动" Toggled="Startup_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsStartupTitle" Text="开机自动启动" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsStartupDescription" Text="登录 Windows 后在后台运行" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ToggleSwitch x:Name="StartupToggle" x:Uid="SettingsStartupToggle" AutomationProperties.Name="开机自动启动" Toggled="Startup_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsThemeTitle" Text="主题" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsThemeDescription" Text="浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ComboBox x:Name="ThemeCombo" x:Uid="SettingsThemeCombo" AutomationProperties.Name="主题" SelectionChanged="Theme_Changed" Grid.Column="1" VerticalAlignment="Center" MinWidth="140">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsThemeTitle" Text="主题" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsThemeDescription" Text="浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="ThemeCombo" x:Uid="SettingsThemeCombo" AutomationProperties.Name="主题" SelectionChanged="Theme_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <ComboBoxItem x:Uid="ThemeSystem" Content="跟随系统" Tag="0" />
                                 <ComboBoxItem x:Uid="ThemeLight" Content="浅色" Tag="1" />
                                 <ComboBoxItem x:Uid="ThemeDark" Content="深色" Tag="2" />
@@ -160,13 +176,15 @@
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="170" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                <TextBlock x:Uid="SettingsHideTitle" Text="面板失焦自动隐藏" FontSize="13" FontWeight="SemiBold" />
-                                <TextBlock x:Uid="SettingsHideDescription" Text="快捷键唤出的面板在切换到其他窗口时自动隐藏" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <ToggleSwitch x:Name="HideOnDeactivateToggle" x:Uid="SettingsHideToggle" AutomationProperties.Name="面板失焦自动隐藏" Toggled="HideOnDeactivate_Toggled" Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent="" />
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Uid="SettingsHideTitle" Text="面板失焦自动隐藏" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsHideDescription" Text="快捷键唤出的面板在切换到其他窗口时自动隐藏" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ToggleSwitch x:Name="HideOnDeactivateToggle" x:Uid="SettingsHideToggle" AutomationProperties.Name="面板失焦自动隐藏" Toggled="HideOnDeactivate_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
                     </StackPanel>
                 </Border>
