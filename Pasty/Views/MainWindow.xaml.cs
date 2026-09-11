@@ -62,7 +62,8 @@ public sealed partial class MainWindow : Window
 
         RootGrid.KeyDown += RootGrid_KeyDown;
         SearchBox.KeyDown += SearchBox_KeyDown;
-        ItemsList.KeyDown += ItemsList_KeyDown;
+        // ListViewItem 会先处理 Enter 和方向键，普通 KeyDown 有时收不到；预览事件在它之前拦截。
+        ItemsList.PreviewKeyDown += ItemsList_KeyDown;
 
         Activated += (s, e) =>
         {
@@ -93,7 +94,6 @@ public sealed partial class MainWindow : Window
         {
             if (e.DidSizeChange || e.DidPositionChange) UpdateCaptionInset();
         };
-        if (ItemsList.Items.Count > 0) ItemsList.SelectedIndex = 0;
     }
 
     public void ApplyTheme(ElementTheme theme) => RootGrid.RequestedTheme = theme;
@@ -178,6 +178,8 @@ public sealed partial class MainWindow : Window
         // WinUI 的 Activate() 不保证抢到前台，必须显式强制，否则面板收不到键盘输入
         Win32.ForceForeground(_hwnd);
         Activate();
+        // 面板默认落在“最近”里的第一条，不让置顶项改变每次唤出后的默认粘贴对象。
+        SelectItem(App.ViewModel.Recent.FirstOrDefault());
         SearchBox.Focus(FocusState.Programmatic);
         SearchBox.SelectAll();
     }
@@ -220,9 +222,13 @@ public sealed partial class MainWindow : Window
 
     private void EnsureSelection()
     {
-        if (ItemsList.SelectedItem == null && ItemsList.Items.Count > 0)
-            ItemsList.SelectedIndex = 0;
+        if (ItemsList.SelectedItem is ClipItem) return;
+
+        SelectItem(_rows.OfType<ClipItem>().FirstOrDefault());
     }
+
+    private void SelectItem(ClipItem? item)
+        => ItemsList.SelectedIndex = item == null ? -1 : _rows.IndexOf(item);
 
     // ---------- 行内类型标记的可见性与配色 ----------
 
@@ -618,13 +624,13 @@ public sealed partial class MainWindow : Window
         if (e.Key == Windows.System.VirtualKey.Enter)
         {
             e.Handled = true;
-            PasteSelectedOrTop();
+            PasteSelected();
         }
-        else if (e.Key == Windows.System.VirtualKey.Down && ItemsList.Items.Count > 0)
+        else if (e.Key is Windows.System.VirtualKey.Up or Windows.System.VirtualKey.Down)
         {
-            ItemsList.Focus(FocusState.Keyboard);
-            if (ItemsList.SelectedIndex < 0) ItemsList.SelectedIndex = 0;
             e.Handled = true;
+            // 搜索框继续持有焦点：第一次方向键就直接移动选择，也不会让列表项画出白色键盘焦点框。
+            MoveSelection(e.Key == Windows.System.VirtualKey.Up ? -1 : 1);
         }
     }
 
@@ -633,20 +639,46 @@ public sealed partial class MainWindow : Window
         if (e.Key == Windows.System.VirtualKey.Enter)
         {
             e.Handled = true;
-            PasteSelectedOrTop();
+            PasteSelected();
         }
-        else if (e.Key == Windows.System.VirtualKey.Up && ItemsList.SelectedIndex <= 0)
+        else if (e.Key is Windows.System.VirtualKey.Up or Windows.System.VirtualKey.Down)
         {
-            SearchBox.Focus(FocusState.Keyboard);
             e.Handled = true;
+            MoveSelection(e.Key == Windows.System.VirtualKey.Up ? -1 : 1);
+            // 即使用户先用鼠标或 Tab 把焦点放进列表，移动后也交还给搜索框，
+            // 让面板里的选中项始终只显示统一的深色高亮，而不是额外叠一圈白色焦点框。
+            SearchBox.Focus(FocusState.Keyboard);
         }
     }
 
-    private async void PasteSelectedOrTop()
+    /// <summary>
+    /// 方向键只在真实条目间移动，跳过夹在 _rows 里的分组标题。
+    /// 否则选中标题后按 Enter 没有 ClipItem 可粘，看起来就像 Enter 突然失效。
+    /// </summary>
+    private void MoveSelection(int direction)
     {
-        var item = ItemsList.SelectedItem as ClipItem ?? App.ViewModel.TopItem;
-        if (item != null)
-            await PasteItemAsync(item);
+        var selectedIndex = ItemsList.SelectedIndex;
+        if (selectedIndex < 0)
+            selectedIndex = direction > 0 ? -1 : _rows.Count;
+
+        for (var index = selectedIndex + direction;
+             index >= 0 && index < _rows.Count;
+             index += direction)
+        {
+            if (_rows[index] is not ClipItem) continue;
+            ItemsList.SelectedIndex = index;
+            ItemsList.ScrollIntoView(_rows[index]);
+            return;
+        }
+
+        if (direction < 0)
+            SearchBox.Focus(FocusState.Keyboard);
+    }
+
+    private async void PasteSelected()
+    {
+        if (ItemsList.SelectedItem is ClipItem item)
+            await PasteItemAsync(item); // 面板形态下 PasteItemAsync 会先隐藏面板，再走统一粘贴链路
     }
 
     private void RootGrid_KeyDown(object sender, KeyRoutedEventArgs e)
