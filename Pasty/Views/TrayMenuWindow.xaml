@@ -16,42 +16,42 @@
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 Padding="6">
             <StackPanel Spacing="2">
-                <Button x:Name="OpenItem" Click="Open_Click" Height="36"
+                <Button x:Name="OpenItem" x:Uid="TrayOpen" Click="Open_Click" Height="36"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                         AutomationProperties.Name="打开面板">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A7;" FontSize="14" />
-                        <TextBlock Text="打开面板" FontSize="12.5" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="TrayOpenText" Text="打开面板" FontSize="12.5" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Click="Settings_Click" Height="36"
+                <Button x:Uid="TraySettings" Click="Settings_Click" Height="36"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                         AutomationProperties.Name="设置">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE713;" FontSize="14" />
-                        <TextBlock Text="设置" FontSize="12.5" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="TraySettingsText" Text="设置" FontSize="12.5" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Click="About_Click" Height="36"
+                <Button x:Uid="TrayAbout" Click="About_Click" Height="36"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                         AutomationProperties.Name="关于">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE946;" FontSize="14" />
-                        <TextBlock Text="关于" FontSize="12.5" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="TrayAboutText" Text="关于" FontSize="12.5" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
                 <Border Height="1" Margin="8,3"
                         Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
-                <Button Click="Exit_Click" Height="36"
+                <Button x:Uid="TrayExit" Click="Exit_Click" Height="36"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Background="Transparent" BorderThickness="0" CornerRadius="6"
                         AutomationProperties.Name="退出">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8BB;" FontSize="14" />
-                        <TextBlock Text="退出" FontSize="12.5" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="TrayExitText" Text="退出" FontSize="12.5" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>

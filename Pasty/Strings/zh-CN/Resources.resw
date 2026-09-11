@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="MainThemeButton.AutomationProperties.Name" xml:space="preserve"><value>切换亮色 / 深色</value></data>
+  <data name="MainThemeToolTip.Content" xml:space="preserve"><value>切换亮色 / 深色</value></data>
+  <data name="MainSettingsButton.AutomationProperties.Name" xml:space="preserve"><value>设置</value></data>
+  <data name="MainSettingsText.Text" xml:space="preserve"><value>设置</value></data>
+  <data name="MainSearchBox.PlaceholderText" xml:space="preserve"><value>搜索剪贴板历史…</value></data>
+  <data name="MainSearchBox.AutomationProperties.Name" xml:space="preserve"><value>搜索剪贴板历史</value></data>
+  <data name="MainItemsList.AutomationProperties.Name" xml:space="preserve"><value>剪贴板历史</value></data>
+  <data name="MainRowEdit.AutomationProperties.Name" xml:space="preserve"><value>编辑内容</value></data>
+  <data name="MainRowEdit.ToolTipService.ToolTip" xml:space="preserve"><value>编辑内容</value></data>
+  <data name="MainRowPin.AutomationProperties.Name" xml:space="preserve"><value>置顶 / 取消置顶</value></data>
+  <data name="MainRowPin.ToolTipService.ToolTip" xml:space="preserve"><value>置顶 / 取消置顶</value></data>
+  <data name="MainRowDelete.AutomationProperties.Name" xml:space="preserve"><value>删除</value></data>
+  <data name="MainRowDelete.ToolTipService.ToolTip" xml:space="preserve"><value>删除</value></data>
+  <data name="MainPreviewTitle.Text" xml:space="preserve"><value>全文预览</value></data>
+  <data name="MainCopyButton.AutomationProperties.Name" xml:space="preserve"><value>复制</value></data>
+  <data name="MainCopyText.Text" xml:space="preserve"><value>复制</value></data>
+  <data name="MainPasteButton.AutomationProperties.Name" xml:space="preserve"><value>粘贴</value></data>
+  <data name="MainPasteText.Text" xml:space="preserve"><value>粘贴</value></data>
+  <data name="MainEditButton.AutomationProperties.Name" xml:space="preserve"><value>编辑</value></data>
+  <data name="MainEditButton.ToolTipService.ToolTip" xml:space="preserve"><value>编辑文字内容</value></data>
+  <data name="MainEditText.Text" xml:space="preserve"><value>编辑</value></data>
+  <data name="MainSaveButton.AutomationProperties.Name" xml:space="preserve"><value>保存</value></data>
+  <data name="MainSaveText.Text" xml:space="preserve"><value>保存</value></data>
+  <data name="MainCancelButton.AutomationProperties.Name" xml:space="preserve"><value>取消</value></data>
+  <data name="MainCancelText.Text" xml:space="preserve"><value>取消</value></data>
+  <data name="MainImagePreview.AutomationProperties.Name" xml:space="preserve"><value>图片预览</value></data>
+  <data name="MainPreviewEditBox.AutomationProperties.Name" xml:space="preserve"><value>编辑剪贴板内容</value></data>
+  <data name="MainEmptyHint.Text" xml:space="preserve"><value>选择左侧条目查看完整内容</value></data>
+  <data name="MainSourceLabel.Text" xml:space="preserve"><value>来源</value></data>
+  <data name="MainTypeLabel.Text" xml:space="preserve"><value>类型</value></data>
+  <data name="MainSizeLabel.Text" xml:space="preserve"><value>大小</value></data>
+  <data name="MainDateLabel.Text" xml:space="preserve"><value>日期</value></data>
+
+  <data name="SettingsWindowTitle.Text" xml:space="preserve"><value>Pasty — 设置</value></data>
+  <data name="SettingsHistorySection.Text" xml:space="preserve"><value>历史记录</value></data>
+  <data name="SettingsRetentionTitle.Text" xml:space="preserve"><value>保存时长</value></data>
+  <data name="SettingsRetentionDescription.Text" xml:space="preserve"><value>超过时长的未置顶历史将自动删除，置顶项不受影响</value></data>
+  <data name="SettingsRetentionCombo.AutomationProperties.Name" xml:space="preserve"><value>保存时长</value></data>
+  <data name="RetentionForever.Content" xml:space="preserve"><value>永久保存</value></data>
+  <data name="Retention7.Content" xml:space="preserve"><value>7 天</value></data>
+  <data name="Retention30.Content" xml:space="preserve"><value>30 天</value></data>
+  <data name="Retention90.Content" xml:space="preserve"><value>90 天</value></data>
+  <data name="Retention365.Content" xml:space="preserve"><value>365 天</value></data>
+  <data name="SettingsMaxItemsTitle.Text" xml:space="preserve"><value>最大条数</value></data>
+  <data name="SettingsMaxItemsDescription.Text" xml:space="preserve"><value>历史数量上限，超出时淘汰最旧的未置顶项</value></data>
+  <data name="SettingsMaxItemsCombo.AutomationProperties.Name" xml:space="preserve"><value>最大条数</value></data>
+  <data name="SettingsClearButton.Content" xml:space="preserve"><value>清空全部历史</value></data>
+  <data name="SettingsHotkeysSection.Text" xml:space="preserve"><value>快捷键</value></data>
+  <data name="SettingsShowHotkeyTitle.Text" xml:space="preserve"><value>唤出面板快捷键</value></data>
+  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>随时唤出剪贴板历史面板</value></data>
+  <data name="SettingsShowHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>唤出面板快捷键</value></data>
+  <data name="SettingsPasteHotkeyTitle.Text" xml:space="preserve"><value>粘贴第一条快捷键</value></data>
+  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>无需打开面板，直接把最近一条粘贴到当前窗口</value></data>
+  <data name="SettingsPasteHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>粘贴第一条快捷键</value></data>
+  <data name="SettingsOverrideTitle.Text" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>
+  <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴</value></data>
+  <data name="SettingsOverrideToggle.AutomationProperties.Name" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>
+  <data name="SettingsHotkeyWarning.Title" xml:space="preserve"><value>快捷键未生效</value></data>
+  <data name="SettingsAppSection.Text" xml:space="preserve"><value>应用</value></data>
+  <data name="SettingsStartupTitle.Text" xml:space="preserve"><value>开机自动启动</value></data>
+  <data name="SettingsStartupDescription.Text" xml:space="preserve"><value>登录 Windows 后在后台运行</value></data>
+  <data name="SettingsStartupToggle.AutomationProperties.Name" xml:space="preserve"><value>开机自动启动</value></data>
+  <data name="SettingsThemeTitle.Text" xml:space="preserve"><value>主题</value></data>
+  <data name="SettingsThemeDescription.Text" xml:space="preserve"><value>浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换</value></data>
+  <data name="SettingsThemeCombo.AutomationProperties.Name" xml:space="preserve"><value>主题</value></data>
+  <data name="ThemeSystem.Content" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="ThemeLight.Content" xml:space="preserve"><value>浅色</value></data>
+  <data name="ThemeDark.Content" xml:space="preserve"><value>深色</value></data>
+  <data name="SettingsHideTitle.Text" xml:space="preserve"><value>面板失焦自动隐藏</value></data>
+  <data name="SettingsHideDescription.Text" xml:space="preserve"><value>快捷键唤出的面板在切换到其他窗口时自动隐藏</value></data>
+  <data name="SettingsHideToggle.AutomationProperties.Name" xml:space="preserve"><value>面板失焦自动隐藏</value></data>
+  <data name="SettingsLanguageTitle.Text" xml:space="preserve"><value>语言</value></data>
+  <data name="SettingsLanguageDescription.Text" xml:space="preserve"><value>界面语言；重新启动 Pasty 后生效</value></data>
+  <data name="SettingsLanguageCombo.AutomationProperties.Name" xml:space="preserve"><value>语言</value></data>
+  <data name="LanguageChinese.Content" xml:space="preserve"><value>简体中文</value></data>
+  <data name="LanguageEnglish.Content" xml:space="preserve"><value>English</value></data>
+
+  <data name="AboutWindowTitle.Text" xml:space="preserve"><value>关于 Pasty</value></data>
+  <data name="AboutIcon.AutomationProperties.Name" xml:space="preserve"><value>Pasty 图标</value></data>
+  <data name="AboutProjectLink.AutomationProperties.Name" xml:space="preserve"><value>打开 Pasty GitHub 项目</value></data>
+  <data name="AboutCheckUpdate.Content" xml:space="preserve"><value>检查更新</value></data>
+  <data name="AboutCheckUpdate.AutomationProperties.Name" xml:space="preserve"><value>检查更新</value></data>
+  <data name="AboutDownload.Content" xml:space="preserve"><value>前往下载</value></data>
+  <data name="AboutDownload.AutomationProperties.Name" xml:space="preserve"><value>前往下载新版本</value></data>
+
+  <data name="TrayOpen.AutomationProperties.Name" xml:space="preserve"><value>打开面板</value></data>
+  <data name="TrayOpenText.Text" xml:space="preserve"><value>打开面板</value></data>
+  <data name="TraySettings.AutomationProperties.Name" xml:space="preserve"><value>设置</value></data>
+  <data name="TraySettingsText.Text" xml:space="preserve"><value>设置</value></data>
+  <data name="TrayAbout.AutomationProperties.Name" xml:space="preserve"><value>关于</value></data>
+  <data name="TrayAboutText.Text" xml:space="preserve"><value>关于</value></data>
+  <data name="TrayExit.AutomationProperties.Name" xml:space="preserve"><value>退出</value></data>
+  <data name="TrayExitText.Text" xml:space="preserve"><value>退出</value></data>
+</root>

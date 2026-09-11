@@ -64,6 +64,7 @@ public partial class App : Application
         }
 
         Settings = AppSettings.Load();
+        Localization.Initialize(Settings.Language);
         StorageService.Load();
         ViewModel = new MainViewModel();
 

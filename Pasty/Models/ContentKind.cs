@@ -1,5 +1,7 @@
 namespace Pasty.Models;
 
+using Pasty.Services;
+
 /// <summary>条目里存的是什么形态的内容。</summary>
 public enum ClipType
 {
@@ -49,17 +51,17 @@ public static class ContentKindInfo
 {
     public static string Label(this ContentKind kind) => kind switch
     {
-        ContentKind.Text => "文字",
-        ContentKind.Link => "链接",
-        ContentKind.Image => "图片",
-        ContentKind.Video => "视频",
-        ContentKind.Audio => "音频",
-        ContentKind.Document => "文档",
-        ContentKind.Archive => "压缩包",
-        ContentKind.Executable => "程序",
-        ContentKind.Code => "代码",
-        ContentKind.Folder => "文件夹",
-        _ => "文件",
+        ContentKind.Text => Localization.Get("KindText"),
+        ContentKind.Link => Localization.Get("KindLink"),
+        ContentKind.Image => Localization.Get("KindImage"),
+        ContentKind.Video => Localization.Get("KindVideo"),
+        ContentKind.Audio => Localization.Get("KindAudio"),
+        ContentKind.Document => Localization.Get("KindDocument"),
+        ContentKind.Archive => Localization.Get("KindArchive"),
+        ContentKind.Executable => Localization.Get("KindExecutable"),
+        ContentKind.Code => Localization.Get("KindCode"),
+        ContentKind.Folder => Localization.Get("KindFolder"),
+        _ => Localization.Get("KindFile"),
     };
 
     public static string Glyph(this ContentKind kind) => kind switch

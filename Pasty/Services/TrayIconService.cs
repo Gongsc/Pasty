@@ -88,7 +88,7 @@ public sealed class TrayIconService
             uFlags = Win32.NIF_MESSAGE | Win32.NIF_ICON | Win32.NIF_TIP,
             uCallbackMessage = Win32.WM_APP_TRAY,
             hIcon = s_icon,
-            szTip = "Pasty 剪切板管理器",
+            szTip = Localization.IsEnglish ? "Pasty Clipboard Manager" : "Pasty 剪切板管理器",
         };
         s_added = Win32.Shell_NotifyIconW(Win32.NIM_ADD, ref data);
     }

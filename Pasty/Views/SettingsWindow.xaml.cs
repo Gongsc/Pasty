@@ -33,7 +33,7 @@ public sealed partial class SettingsWindow : Window
     {
         InitializeComponent();
         _hwnd = WindowNative.GetWindowHandle(this);
-        Title = "Pasty — 设置";
+        Title = Localization.Get("SettingsTitle");
         ExtendsContentIntoTitleBar = true;
         AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
@@ -41,7 +41,7 @@ public sealed partial class SettingsWindow : Window
         WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
         RootGrid.ActualThemeChanged += (s, e) =>
             WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
-        AboutText.Text = $"Pasty v{App.Version} · 数据全部存在本机，仅检查更新时联网 · GNU GPL v3";
+        AboutText.Text = Localization.Format("SettingsAbout", App.Version);
 
         _loading = true;
         SelectByTag(RetentionCombo, App.Settings.RetentionDays);
@@ -56,6 +56,7 @@ public sealed partial class SettingsWindow : Window
         StartupToggle.IsOn = StartupService.IsEnabled();
         HideOnDeactivateToggle.IsOn = App.Settings.HideOnDeactivate;
         SelectByTag(ThemeCombo, App.Settings.Theme);
+        SelectByTag(LanguageCombo, Localization.CurrentLanguage);
         _loading = false;
 
         UpdateHotkeyWarning();
@@ -186,6 +187,16 @@ public sealed partial class SettingsWindow : Window
         App.ApplyTheme();
     }
 
+    private void Language_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || LanguageCombo.SelectedItem is not ComboBoxItem item) return;
+        var language = Localization.Normalize(item.Tag?.ToString());
+        App.Settings.Language = language;
+        Save();
+        LanguageRestartInfo.Message = Localization.Get("RestartLanguage");
+        LanguageRestartInfo.IsOpen = language != Localization.CurrentLanguage;
+    }
+
     private async void Clear_Click(object sender, RoutedEventArgs e)
     {
         var total = App.ViewModel.TotalCount;
@@ -193,8 +204,8 @@ public sealed partial class SettingsWindow : Window
         if (total == 0) return;
 
         var detail = pinned > 0
-            ? $"将删除全部 {total} 条记录，其中 {pinned} 条已置顶，且无法恢复。"
-            : $"将删除全部 {total} 条记录，且无法恢复。";
+            ? Localization.Format("ClearDetailPinned", total, pinned)
+            : Localization.Format("ClearDetail", total);
 
         var dialog = new ContentDialog
         {
@@ -202,10 +213,10 @@ public sealed partial class SettingsWindow : Window
             // 对话框挂在 XamlRoot 的弹出层上，不在 RootGrid 之下，
             // 不显式带上主题就会用应用主题渲染——手动切到深色时弹出一个白框
             RequestedTheme = RootGrid.RequestedTheme,
-            Title = "清空全部历史？",
+            Title = Localization.Get("ClearTitle"),
             Content = detail,
-            PrimaryButtonText = "清空",
-            CloseButtonText = "取消",
+            PrimaryButtonText = Localization.Get("Clear"),
+            CloseButtonText = Localization.Get("Cancel"),
             DefaultButton = ContentDialogButton.Close,
         };
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)

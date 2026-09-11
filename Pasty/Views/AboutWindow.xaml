@@ -11,7 +11,7 @@
         </Grid.RowDefinitions>
 
         <Grid x:Name="AppTitleBar">
-            <TextBlock Text="关于 Pasty" FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" />
+            <TextBlock x:Uid="AboutWindowTitle" Text="关于 Pasty" FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" />
         </Grid>
 
         <Border Grid.Row="1" Margin="20,8,20,20" Padding="24,20"
@@ -19,21 +19,21 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <StackPanel HorizontalAlignment="Center" Spacing="8">
-                <Image x:Name="AboutIcon" Width="72" Height="72" Margin="0,0,0,2"
+                <Image x:Name="AboutIcon" x:Uid="AboutIcon" Width="72" Height="72" Margin="0,0,0,2"
                        AutomationProperties.Name="Pasty 图标" />
                 <TextBlock Text="Pasty" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" />
                 <TextBlock x:Name="VersionText" FontSize="12"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                            HorizontalAlignment="Center" />
-                <HyperlinkButton Content="github.com/Gongsc/Pasty" Click="ProjectLink_Click"
+                <HyperlinkButton x:Uid="AboutProjectLink" Content="github.com/Gongsc/Pasty" Click="ProjectLink_Click"
                                  Padding="4,2" HorizontalAlignment="Center"
                                  AutomationProperties.Name="打开 Pasty GitHub 项目" />
 
                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,10,0,0"
                             HorizontalAlignment="Center">
-                    <Button x:Name="CheckUpdateButton" Content="检查更新" Click="CheckUpdate_Click"
+                    <Button x:Name="CheckUpdateButton" x:Uid="AboutCheckUpdate" Content="检查更新" Click="CheckUpdate_Click"
                             AutomationProperties.Name="检查更新" />
-                    <Button x:Name="DownloadButton" Content="前往下载" Click="Download_Click"
+                    <Button x:Name="DownloadButton" x:Uid="AboutDownload" Content="前往下载" Click="Download_Click"
                             Style="{StaticResource AccentButtonStyle}" Visibility="Collapsed"
                             AutomationProperties.Name="前往下载新版本" />
                 </StackPanel>

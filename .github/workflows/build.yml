@@ -1,7 +1,6 @@
 name: 构建与发布
 
-# unpackaged 的 WinUI 3 应用：构建产物是整个输出目录（自包含，含 Windows App SDK 运行时），
-# 打成 zip 供人下载，打 tag 时再挂到 GitHub Release 上。
+# unpackaged 的 WinUI 3 应用：先生成自包含目录，再用 Inno Setup 制作每用户安装包。
 on:
   push:
     branches: [main]
@@ -32,7 +31,7 @@ jobs:
       - name: 构建（Release / x64）
         run: dotnet build Pasty/Pasty.csproj -c Release -p:Platform=x64 --no-restore
 
-      - name: 打包为 zip
+      - name: 制作 Windows 安装包
         shell: pwsh
         run: |
           # 版本号只认 csproj 里的 <Version>，产物名、Release 标题都从它派生
@@ -46,17 +45,41 @@ jobs:
             throw "标签 $env:GITHUB_REF_NAME 与 csproj 版本 v$ver 不一致"
           }
 
-          $zip = "Pasty-v$ver-win-x64.zip"
-          Compress-Archive -Path "$env:OUT_DIR/*" -DestinationPath $zip -CompressionLevel Optimal
+          # Windows App SDK 自包含输出会带上全部 MUI 目录。安装包只保留应用支持的中英文；
+          # 仅删除“内部全部是 *.dll.mui”的纯语言目录，避免误删 Assets/runtimes 等运行文件。
+          $outPath = (Resolve-Path $env:OUT_DIR).Path.TrimEnd('\')
+          $keptLanguages = @('en-us', 'zh-CN')
+          foreach ($dir in Get-ChildItem -LiteralPath $outPath -Directory) {
+            $files = @(Get-ChildItem -LiteralPath $dir.FullName -File -Recurse)
+            $isMuiDirectory = $files.Count -gt 0 -and @($files | Where-Object Name -NotLike '*.dll.mui').Count -eq 0
+            if ($isMuiDirectory -and $dir.Name -notin $keptLanguages) {
+              $resolved = $dir.FullName.TrimEnd('\')
+              if (-not $resolved.StartsWith("$outPath\", [StringComparison]::OrdinalIgnoreCase)) {
+                throw "拒绝删除输出目录之外的路径：$resolved"
+              }
+              Remove-Item -LiteralPath $resolved -Recurse -Force
+            }
+          }
+
+          $installerDir = Join-Path $env:GITHUB_WORKSPACE 'installer-output'
+          New-Item -ItemType Directory -Force -Path $installerDir | Out-Null
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw "找不到 Inno Setup 编译器：$iscc" }
+          & $iscc "/DMyAppVersion=$ver" "/DSourceDir=$((Resolve-Path $env:OUT_DIR).Path)" `
+            "/DOutputDir=$installerDir" 'installer/Pasty.iss'
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup 编译失败：$LASTEXITCODE" }
+
+          $installer = Join-Path $installerDir "Pasty-v$ver-win-x64-Setup.exe"
+          if (-not (Test-Path $installer)) { throw "安装包缺失：$installer" }
           "VERSION=$ver" >> $env:GITHUB_ENV
-          "ZIP=$zip" >> $env:GITHUB_ENV
-          Write-Host "已打包 $zip（$([math]::Round((Get-Item $zip).Length / 1MB, 1)) MB）"
+          "INSTALLER=$installer" >> $env:GITHUB_ENV
+          Write-Host "已生成 $installer（$([math]::Round((Get-Item $installer).Length / 1MB, 1)) MB）"
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
-          name: Pasty-v${{ env.VERSION }}-win-x64
-          path: ${{ env.ZIP }}
+          name: Pasty-v${{ env.VERSION }}-win-x64-Setup
+          path: ${{ env.INSTALLER }}
           if-no-files-found: error
 
       - name: 发布到 GitHub Release（仅打 tag 时）
@@ -65,5 +88,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create $env:GITHUB_REF_NAME $env:ZIP `
+          gh release create $env:GITHUB_REF_NAME $env:INSTALLER `
             --title "Pasty v$env:VERSION" --generate-notes

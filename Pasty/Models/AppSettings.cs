@@ -18,6 +18,7 @@ public class AppSettings
     public bool AutoStart { get; set; }
     public int Theme { get; set; } = 0;                  // 0 跟随系统 1 浅色 2 深色
     public bool HideOnDeactivate { get; set; } = true;
+    public string Language { get; set; } = string.Empty; // 空值首次启动时：中文系统用中文，其余系统用英文
 
     private static string FilePath =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

@@ -43,17 +43,17 @@
                  这里的 138 只是首次布局完成前的兜底值 -->
             <StackPanel x:Name="TitleBarActions" Grid.Column="1" Orientation="Horizontal" Spacing="4"
                         Margin="0,0,138,0" VerticalAlignment="Center">
-                <Button x:Name="ThemeButton" Click="ThemeButton_Click" Background="Transparent" BorderThickness="0" Padding="8"
+                <Button x:Name="ThemeButton" x:Uid="MainThemeButton" Click="ThemeButton_Click" Background="Transparent" BorderThickness="0" Padding="8"
                         AutomationProperties.Name="切换亮色 / 深色">
                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE793;" FontSize="14" />
                     <ToolTipService.ToolTip>
-                        <ToolTip Content="切换亮色 / 深色" />
+                        <ToolTip x:Uid="MainThemeToolTip" Content="切换亮色 / 深色" />
                     </ToolTipService.ToolTip>
                 </Button>
-                <Button x:Name="SettingsButton" Click="SettingsButton_Click" Background="Transparent" BorderThickness="0" Padding="8">
+                <Button x:Name="SettingsButton" x:Uid="MainSettingsButton" Click="SettingsButton_Click" Background="Transparent" BorderThickness="0" Padding="8">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE713;" FontSize="14" />
-                        <TextBlock Text="设置" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="MainSettingsText" Text="设置" FontSize="12" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>
@@ -73,10 +73,10 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBox x:Name="SearchBox" Margin="0,4,0,8" PlaceholderText="搜索剪贴板历史…"
+                <TextBox x:Name="SearchBox" x:Uid="MainSearchBox" Margin="0,4,0,8" PlaceholderText="搜索剪贴板历史…"
                          AutomationProperties.Name="搜索剪贴板历史" TextChanged="SearchBox_TextChanged" />
                 <ListView
-                    x:Name="ItemsList" Grid.Row="1"
+                    x:Name="ItemsList" x:Uid="MainItemsList" Grid.Row="1"
                     Margin="0,0,0,6"
                     SelectionMode="Single"
                     AutomationProperties.Name="剪贴板历史"
@@ -156,19 +156,19 @@
                                      整组按钮原先用 Opacity=0.7 压暗，高对比度主题下 Opacity 照样生效，
                                      会把系统保证的对比度打掉，所以改成按图标取次级前景色。 -->
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
-                                    <Button x:Name="EditButton" Click="EditItem_Click" Tag="{x:Bind}" Padding="5"
+                                    <Button x:Name="EditButton" x:Uid="MainRowEdit" Click="EditItem_Click" Tag="{x:Bind}" Padding="5"
                                             Background="Transparent" BorderThickness="0"
                                             AutomationProperties.Name="编辑内容" ToolTipService.ToolTip="编辑内容">
                                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="12"
                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
-                                    <Button x:Name="PinButton" Click="PinItem_Click" Tag="{x:Bind}" Padding="5"
+                                    <Button x:Name="PinButton" x:Uid="MainRowPin" Click="PinItem_Click" Tag="{x:Bind}" Padding="5"
                                             Background="Transparent" BorderThickness="0"
                                             AutomationProperties.Name="置顶 / 取消置顶" ToolTipService.ToolTip="置顶 / 取消置顶">
                                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{x:Bind PinGlyph}" FontSize="12"
                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
-                                    <Button x:Name="DeleteButton" Click="DeleteItem_Click" Tag="{x:Bind}" Padding="5"
+                                    <Button x:Name="DeleteButton" x:Uid="MainRowDelete" Click="DeleteItem_Click" Tag="{x:Bind}" Padding="5"
                                             Background="Transparent" BorderThickness="0"
                                             AutomationProperties.Name="删除" ToolTipService.ToolTip="删除">
                                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE74D;" FontSize="12"
@@ -213,43 +213,43 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="PreviewTitle" Text="全文预览" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <TextBlock x:Name="PreviewTitle" x:Uid="MainPreviewTitle" Text="全文预览" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="PreviewActions">
                         <!-- 这几个按钮的可访问名必须显式写：内容是 StackPanel（图标 + 文字）而不是一个字符串，
                              UIA 不会从子孙 TextBlock 里聚合出 Name，读屏软件只能念出个空按钮 -->
-                        <Button x:Name="CopyButton" Click="CopyPreview_Click" AutomationProperties.Name="复制">
+                        <Button x:Name="CopyButton" x:Uid="MainCopyButton" Click="CopyPreview_Click" AutomationProperties.Name="复制">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8C8;" FontSize="13" />
-                                <TextBlock Text="复制" FontSize="12" />
+                                <TextBlock x:Uid="MainCopyText" Text="复制" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="PasteButton" Click="PastePreview_Click" Style="{StaticResource AccentButtonStyle}"
+                        <Button x:Name="PasteButton" x:Uid="MainPasteButton" Click="PastePreview_Click" Style="{StaticResource AccentButtonStyle}"
                                 AutomationProperties.Name="粘贴">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE77F;" FontSize="13" />
-                                <TextBlock Text="粘贴" FontSize="12" />
+                                <TextBlock x:Uid="MainPasteText" Text="粘贴" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="EditPreviewButton" Click="EditPreview_Click" ToolTipService.ToolTip="编辑文字内容"
+                        <Button x:Name="EditPreviewButton" x:Uid="MainEditButton" Click="EditPreview_Click" ToolTipService.ToolTip="编辑文字内容"
                                 AutomationProperties.Name="编辑">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="13" />
-                                <TextBlock Text="编辑" FontSize="12" />
+                                <TextBlock x:Uid="MainEditText" Text="编辑" FontSize="12" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" x:Name="EditActions" Visibility="Collapsed">
-                        <Button x:Name="SaveEditButton" Click="SaveEdit_Click" Style="{StaticResource AccentButtonStyle}"
+                        <Button x:Name="SaveEditButton" x:Uid="MainSaveButton" Click="SaveEdit_Click" Style="{StaticResource AccentButtonStyle}"
                                 AutomationProperties.Name="保存">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE73E;" FontSize="13" />
-                                <TextBlock Text="保存" FontSize="12" />
+                                <TextBlock x:Uid="MainSaveText" Text="保存" FontSize="12" />
                             </StackPanel>
                         </Button>
-                        <Button x:Name="CancelEditButton" Click="CancelEdit_Click" AutomationProperties.Name="取消">
+                        <Button x:Name="CancelEditButton" x:Uid="MainCancelButton" Click="CancelEdit_Click" AutomationProperties.Name="取消">
                             <StackPanel Orientation="Horizontal" Spacing="6">
                                 <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE711;" FontSize="13" />
-                                <TextBlock Text="取消" FontSize="12" />
+                                <TextBlock x:Uid="MainCancelText" Text="取消" FontSize="12" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -268,16 +268,16 @@
                         </ScrollViewer>
                         <ScrollViewer x:Name="ImagePreviewHost" Visibility="Collapsed"
                                       VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <Image x:Name="PreviewImage" Stretch="Uniform" MaxHeight="640" Margin="0,0,10,2"
+                            <Image x:Name="PreviewImage" x:Uid="MainImagePreview" Stretch="Uniform" MaxHeight="640" Margin="0,0,10,2"
                                    AutomationProperties.Name="图片预览" />
                         </ScrollViewer>
                         <ScrollViewer x:Name="EditHost" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" MinHeight="200">
-                            <TextBox x:Name="PreviewEditBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="13"
+                            <TextBox x:Name="PreviewEditBox" x:Uid="MainPreviewEditBox" AcceptsReturn="True" TextWrapping="Wrap" FontSize="13"
                                      IsSpellCheckEnabled="False" BorderThickness="0" Background="Transparent"
                                      AutomationProperties.Name="编辑剪贴板内容"
                                      Margin="0,0,10,2" MinHeight="200" />
                         </ScrollViewer>
-                        <TextBlock x:Name="EmptyHint" Text="选择左侧条目查看完整内容" FontSize="12" Margin="10,0,10,0"
+                        <TextBlock x:Name="EmptyHint" x:Uid="MainEmptyHint" Text="选择左侧条目查看完整内容" FontSize="12" Margin="10,0,10,0"
                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
@@ -292,19 +292,19 @@
                             <ColumnDefinition Width="1.6*" />
                         </Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="来源" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Uid="MainSourceLabel" Text="来源" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <TextBlock x:Name="PreviewSource" FontSize="12" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="类型" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Uid="MainTypeLabel" Text="类型" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <TextBlock x:Name="PreviewType" FontSize="12" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="大小" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Uid="MainSizeLabel" Text="大小" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <TextBlock x:Name="PreviewSize" FontSize="12" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="3">
-                            <TextBlock Text="日期" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                            <TextBlock x:Uid="MainDateLabel" Text="日期" FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
                             <TextBlock x:Name="PreviewDate" FontSize="12" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Grid>

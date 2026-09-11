@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="MainThemeButton.AutomationProperties.Name" xml:space="preserve"><value>Switch light / dark theme</value></data>
+  <data name="MainThemeToolTip.Content" xml:space="preserve"><value>Switch light / dark theme</value></data>
+  <data name="MainSettingsButton.AutomationProperties.Name" xml:space="preserve"><value>Settings</value></data>
+  <data name="MainSettingsText.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="MainSearchBox.PlaceholderText" xml:space="preserve"><value>Search clipboard history…</value></data>
+  <data name="MainSearchBox.AutomationProperties.Name" xml:space="preserve"><value>Search clipboard history</value></data>
+  <data name="MainItemsList.AutomationProperties.Name" xml:space="preserve"><value>Clipboard history</value></data>
+  <data name="MainRowEdit.AutomationProperties.Name" xml:space="preserve"><value>Edit content</value></data>
+  <data name="MainRowEdit.ToolTipService.ToolTip" xml:space="preserve"><value>Edit content</value></data>
+  <data name="MainRowPin.AutomationProperties.Name" xml:space="preserve"><value>Pin / unpin</value></data>
+  <data name="MainRowPin.ToolTipService.ToolTip" xml:space="preserve"><value>Pin / unpin</value></data>
+  <data name="MainRowDelete.AutomationProperties.Name" xml:space="preserve"><value>Delete</value></data>
+  <data name="MainRowDelete.ToolTipService.ToolTip" xml:space="preserve"><value>Delete</value></data>
+  <data name="MainPreviewTitle.Text" xml:space="preserve"><value>Full preview</value></data>
+  <data name="MainCopyButton.AutomationProperties.Name" xml:space="preserve"><value>Copy</value></data>
+  <data name="MainCopyText.Text" xml:space="preserve"><value>Copy</value></data>
+  <data name="MainPasteButton.AutomationProperties.Name" xml:space="preserve"><value>Paste</value></data>
+  <data name="MainPasteText.Text" xml:space="preserve"><value>Paste</value></data>
+  <data name="MainEditButton.AutomationProperties.Name" xml:space="preserve"><value>Edit</value></data>
+  <data name="MainEditButton.ToolTipService.ToolTip" xml:space="preserve"><value>Edit text content</value></data>
+  <data name="MainEditText.Text" xml:space="preserve"><value>Edit</value></data>
+  <data name="MainSaveButton.AutomationProperties.Name" xml:space="preserve"><value>Save</value></data>
+  <data name="MainSaveText.Text" xml:space="preserve"><value>Save</value></data>
+  <data name="MainCancelButton.AutomationProperties.Name" xml:space="preserve"><value>Cancel</value></data>
+  <data name="MainCancelText.Text" xml:space="preserve"><value>Cancel</value></data>
+  <data name="MainImagePreview.AutomationProperties.Name" xml:space="preserve"><value>Image preview</value></data>
+  <data name="MainPreviewEditBox.AutomationProperties.Name" xml:space="preserve"><value>Edit clipboard content</value></data>
+  <data name="MainEmptyHint.Text" xml:space="preserve"><value>Select an item on the left to view its full content</value></data>
+  <data name="MainSourceLabel.Text" xml:space="preserve"><value>Source</value></data>
+  <data name="MainTypeLabel.Text" xml:space="preserve"><value>Type</value></data>
+  <data name="MainSizeLabel.Text" xml:space="preserve"><value>Size</value></data>
+  <data name="MainDateLabel.Text" xml:space="preserve"><value>Date</value></data>
+
+  <data name="SettingsWindowTitle.Text" xml:space="preserve"><value>Pasty — Settings</value></data>
+  <data name="SettingsHistorySection.Text" xml:space="preserve"><value>History</value></data>
+  <data name="SettingsRetentionTitle.Text" xml:space="preserve"><value>Keep history</value></data>
+  <data name="SettingsRetentionDescription.Text" xml:space="preserve"><value>Unpinned history older than this is deleted automatically; pinned items are kept</value></data>
+  <data name="SettingsRetentionCombo.AutomationProperties.Name" xml:space="preserve"><value>Keep history</value></data>
+  <data name="RetentionForever.Content" xml:space="preserve"><value>Forever</value></data>
+  <data name="Retention7.Content" xml:space="preserve"><value>7 days</value></data>
+  <data name="Retention30.Content" xml:space="preserve"><value>30 days</value></data>
+  <data name="Retention90.Content" xml:space="preserve"><value>90 days</value></data>
+  <data name="Retention365.Content" xml:space="preserve"><value>365 days</value></data>
+  <data name="SettingsMaxItemsTitle.Text" xml:space="preserve"><value>Maximum items</value></data>
+  <data name="SettingsMaxItemsDescription.Text" xml:space="preserve"><value>Oldest unpinned items are removed when this limit is exceeded</value></data>
+  <data name="SettingsMaxItemsCombo.AutomationProperties.Name" xml:space="preserve"><value>Maximum items</value></data>
+  <data name="SettingsClearButton.Content" xml:space="preserve"><value>Clear all history</value></data>
+  <data name="SettingsHotkeysSection.Text" xml:space="preserve"><value>Hotkeys</value></data>
+  <data name="SettingsShowHotkeyTitle.Text" xml:space="preserve"><value>Open panel hotkey</value></data>
+  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>Open clipboard history from anywhere</value></data>
+  <data name="SettingsShowHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>Open panel hotkey</value></data>
+  <data name="SettingsPasteHotkeyTitle.Text" xml:space="preserve"><value>Paste latest hotkey</value></data>
+  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>Paste the most recent item into the current window without opening the panel</value></data>
+  <data name="SettingsPasteHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>Paste latest hotkey</value></data>
+  <data name="SettingsOverrideTitle.Text" xml:space="preserve"><value>Override system Ctrl+V</value></data>
+  <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>Ctrl+V pastes the latest history item; use the panel to select another item</value></data>
+  <data name="SettingsOverrideToggle.AutomationProperties.Name" xml:space="preserve"><value>Override system Ctrl+V</value></data>
+  <data name="SettingsHotkeyWarning.Title" xml:space="preserve"><value>Hotkey unavailable</value></data>
+  <data name="SettingsAppSection.Text" xml:space="preserve"><value>Application</value></data>
+  <data name="SettingsStartupTitle.Text" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="SettingsStartupDescription.Text" xml:space="preserve"><value>Run in the background after signing in to Windows</value></data>
+  <data name="SettingsStartupToggle.AutomationProperties.Name" xml:space="preserve"><value>Start with Windows</value></data>
+  <data name="SettingsThemeTitle.Text" xml:space="preserve"><value>Theme</value></data>
+  <data name="SettingsThemeDescription.Text" xml:space="preserve"><value>Light / dark / system; the title bar button switches it at any time</value></data>
+  <data name="SettingsThemeCombo.AutomationProperties.Name" xml:space="preserve"><value>Theme</value></data>
+  <data name="ThemeSystem.Content" xml:space="preserve"><value>Use system setting</value></data>
+  <data name="ThemeLight.Content" xml:space="preserve"><value>Light</value></data>
+  <data name="ThemeDark.Content" xml:space="preserve"><value>Dark</value></data>
+  <data name="SettingsHideTitle.Text" xml:space="preserve"><value>Hide panel when focus is lost</value></data>
+  <data name="SettingsHideDescription.Text" xml:space="preserve"><value>Automatically hide the hotkey panel after switching to another window</value></data>
+  <data name="SettingsHideToggle.AutomationProperties.Name" xml:space="preserve"><value>Hide panel when focus is lost</value></data>
+  <data name="SettingsLanguageTitle.Text" xml:space="preserve"><value>Language</value></data>
+  <data name="SettingsLanguageDescription.Text" xml:space="preserve"><value>Interface language; takes effect after restarting Pasty</value></data>
+  <data name="SettingsLanguageCombo.AutomationProperties.Name" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageChinese.Content" xml:space="preserve"><value>简体中文</value></data>
+  <data name="LanguageEnglish.Content" xml:space="preserve"><value>English</value></data>
+
+  <data name="AboutWindowTitle.Text" xml:space="preserve"><value>About Pasty</value></data>
+  <data name="AboutIcon.AutomationProperties.Name" xml:space="preserve"><value>Pasty icon</value></data>
+  <data name="AboutProjectLink.AutomationProperties.Name" xml:space="preserve"><value>Open the Pasty GitHub project</value></data>
+  <data name="AboutCheckUpdate.Content" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="AboutCheckUpdate.AutomationProperties.Name" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="AboutDownload.Content" xml:space="preserve"><value>Download</value></data>
+  <data name="AboutDownload.AutomationProperties.Name" xml:space="preserve"><value>Download the new version</value></data>
+
+  <data name="TrayOpen.AutomationProperties.Name" xml:space="preserve"><value>Open panel</value></data>
+  <data name="TrayOpenText.Text" xml:space="preserve"><value>Open panel</value></data>
+  <data name="TraySettings.AutomationProperties.Name" xml:space="preserve"><value>Settings</value></data>
+  <data name="TraySettingsText.Text" xml:space="preserve"><value>Settings</value></data>
+  <data name="TrayAbout.AutomationProperties.Name" xml:space="preserve"><value>About</value></data>
+  <data name="TrayAboutText.Text" xml:space="preserve"><value>About</value></data>
+  <data name="TrayExit.AutomationProperties.Name" xml:space="preserve"><value>Exit</value></data>
+  <data name="TrayExitText.Text" xml:space="preserve"><value>Exit</value></data>
+</root>

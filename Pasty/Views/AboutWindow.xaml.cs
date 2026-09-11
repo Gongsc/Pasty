@@ -16,7 +16,7 @@ public sealed partial class AboutWindow : Window
     {
         InitializeComponent();
         _hwnd = WindowNative.GetWindowHandle(this);
-        Title = "关于 Pasty";
+        Title = Localization.Get("AboutTitle");
         ExtendsContentIntoTitleBar = true;
         AppWindow.SetIcon(App.IconPath);
         SetTitleBar(AppTitleBar);
@@ -26,7 +26,7 @@ public sealed partial class AboutWindow : Window
             WindowThemeService.ApplyCaptionButtonColors(AppWindow, RootGrid.ActualTheme);
 
         AboutIcon.Source = new BitmapImage(new Uri(App.IconPath));
-        VersionText.Text = $"版本 {App.Version}";
+        VersionText.Text = Localization.Format("Version", App.Version);
     }
 
     public void ApplyTheme(ElementTheme theme) => RootGrid.RequestedTheme = theme;
@@ -46,24 +46,24 @@ public sealed partial class AboutWindow : Window
         CheckUpdateButton.IsEnabled = false;
         DownloadButton.Visibility = Visibility.Collapsed;
         UpdateProgress.IsActive = true;
-        UpdateStatus.Text = "正在检查…";
+        UpdateStatus.Text = Localization.Get("Checking");
         try
         {
             var result = await UpdateService.CheckAsync();
             _latestReleaseUri = result.ReleaseUri;
             if (result.HasUpdate)
             {
-                UpdateStatus.Text = $"发现新版本 {result.LatestVersion}";
+                UpdateStatus.Text = Localization.Format("UpdateFound", result.LatestVersion);
                 DownloadButton.Visibility = Visibility.Visible;
             }
             else
             {
-                UpdateStatus.Text = $"当前已是最新版本（{result.LatestVersion}）";
+                UpdateStatus.Text = Localization.Format("UpToDate", result.LatestVersion);
             }
         }
         catch (Exception ex)
         {
-            UpdateStatus.Text = "检查失败，请稍后重试";
+            UpdateStatus.Text = Localization.Get("UpdateFailed");
             Trace.Log($"检查更新失败: {ex.Message}");
         }
         finally

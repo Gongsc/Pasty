@@ -67,13 +67,13 @@ public sealed class HotkeyService : IDisposable
         Win32.UnregisterHotKey(_hwnd, IdPasteTop);
 
         var errors = new List<string>();
-        TryRegister(IdShowPanel, App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk, "唤出面板", errors);
-        TryRegister(IdPasteTop, App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk, "粘贴第一条", errors);
+        TryRegister(IdShowPanel, App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk, Localization.Get("ShowPanelHotkey"), errors);
+        TryRegister(IdPasteTop, App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk, Localization.Get("PasteLatestHotkey"), errors);
 
         OverrideCtrlV = App.Settings.OverrideCtrlV;
         // 钩子只在启动时装一次；开着“覆盖 Ctrl+V”却没装上钩子，这个开关就是纯粹的摆设
         if (OverrideCtrlV && _hook == IntPtr.Zero)
-            errors.Add($"键盘钩子安装失败（错误码 {_hookError}），“覆盖系统 Ctrl+V”不会生效，请重启 Pasty");
+            errors.Add(Localization.Format("HookFailed", _hookError));
 
         RegistrationErrors = errors;
         RegistrationChanged?.Invoke();
@@ -84,8 +84,7 @@ public sealed class HotkeyService : IDisposable
     {
         if (Win32.RegisterHotKey(_hwnd, id, mods, vk)) return;
         var err = Marshal.GetLastWin32Error();
-        errors.Add($"{label}快捷键 {AppSettings.HotkeyName(mods, vk)} 注册失败（错误码 {err}），" +
-                   "通常是已被其他程序占用，换一个组合即可");
+        errors.Add(Localization.Format("HotkeyFailed", label, AppSettings.HotkeyName(mods, vk), err));
         Trace.Log($"RegisterHotKey 失败 id={id} err={err}");
     }
 

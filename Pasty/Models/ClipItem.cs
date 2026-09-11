@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Pasty.Services;
 
 namespace Pasty.Models;
 
@@ -47,7 +48,7 @@ public class ClipItem
     [JsonIgnore] public string KindLabel => Kind.Label();
     [JsonIgnore] public string TypeGlyph => Kind.Glyph();
 
-    [JsonIgnore] public string SourceText => string.IsNullOrWhiteSpace(Source) ? "未知" : Source;
+    [JsonIgnore] public string SourceText => string.IsNullOrWhiteSpace(Source) ? Localization.Get("Unknown") : Source;
     [JsonIgnore] public string SizeDetailText { get { Probe(); return _sizes.Length > 0 ? _sizes : "—"; } }
     [JsonIgnore] public string DateDetailText => LastUsedAt.ToString("yyyy-MM-dd HH:mm:ss");
 
@@ -55,12 +56,12 @@ public class ClipItem
     public string PreviewText => Type switch
     {
         ClipType.Text => Text.ReplaceLineEndings(" ").Trim(),
-        ClipType.Image => $"图片 · {Path.GetFileName(ImagePath)}",
+        ClipType.Image => Localization.Format("Image", Path.GetFileName(ImagePath) ?? string.Empty),
         _ => FilePaths.Count switch
         {
-            0 => "（空）",
+            0 => Localization.Get("Empty"),
             1 => Path.GetFileName(PrimaryPath),
-            _ => $"{Path.GetFileName(PrimaryPath)} 等 {FilePaths.Count} 个文件",
+            _ => Localization.Format("Files", Path.GetFileName(PrimaryPath), FilePaths.Count),
         },
     };
 
@@ -79,13 +80,13 @@ public class ClipItem
     [JsonIgnore]
     public string ReadinessHint => Readiness switch
     {
-        PasteReadiness.Direct => "可直接粘贴：Ctrl+V 能粘进绝大多数应用",
-        PasteReadiness.Limited => "文件条目：只有支持接收文件的应用（资源管理器、微信、Office 等）粘得上",
+        PasteReadiness.Direct => Localization.Get("DirectHint"),
+        PasteReadiness.Limited => Localization.Get("LimitedHint"),
         _ => Type switch
         {
-            ClipType.File => "已失效：源文件被删除、移动，或所在磁盘/U 盘当前不可用",
-            ClipType.Image => "已失效：图片文件已不在磁盘上",
-            _ => "已失效：内容为空",
+            ClipType.File => Localization.Get("MissingFileHint"),
+            ClipType.Image => Localization.Get("MissingImageHint"),
+            _ => Localization.Get("MissingContentHint"),
         },
     };
 
@@ -104,8 +105,8 @@ public class ClipItem
             var parts = new List<string> { LastUsedAt.ToString("MM-dd HH:mm") };
             if (Type == ClipType.File) parts.Add(KindLabel);
             if (_sizes.Length > 0) parts.Add(_sizes);
-            if (IsPinned) parts.Add("置顶");
-            if (_readiness == PasteReadiness.Unavailable) parts.Insert(0, "⚠ 已失效");
+            if (IsPinned) parts.Add(Localization.Get("Pinned"));
+            if (_readiness == PasteReadiness.Unavailable) parts.Insert(0, Localization.Get("Unavailable"));
             return string.Join(" · ", parts);
         }
     }
@@ -118,14 +119,14 @@ public class ClipItem
         {
             if (Type != ClipType.File) return Text;
             Probe();
-            var head = $"{KindLabel} · {(FilePaths.Count > 1 ? $"{FilePaths.Count} 个条目 · " : string.Empty)}{_sizes}";
+            var head = $"{KindLabel} · {(FilePaths.Count > 1 ? Localization.Format("Items", FilePaths.Count) : string.Empty)}{_sizes}";
             var lines = new List<string>
             {
                 head.TrimEnd(' ', '·'), // 量不到大小时别留一个孤零零的“ · ”
                 string.Empty,
             };
             foreach (var p in FilePaths)
-                lines.Add(StillThere(p) ? p : $"{p}    （已不存在）");
+                lines.Add(StillThere(p) ? p : Localization.Format("MissingPath", p));
             return string.Join(Environment.NewLine, lines);
         }
     }
@@ -153,7 +154,9 @@ public class ClipItem
         // 文字条目不碰文件系统，每次现算：编辑完内容字数就该立刻变对，不该被缓存拖住 30 秒。
         if (Type == ClipType.Text)
         {
-            _sizes = Text.Length > 1000 ? $"{Text.Length / 1000.0:F1}k 字符" : $"{Text.Length} 字符";
+            _sizes = Text.Length > 1000
+                ? Localization.Format("CharactersK", Text.Length / 1000.0)
+                : Localization.Format("Characters", Text.Length);
             _readiness = string.IsNullOrWhiteSpace(Text) ? PasteReadiness.Unavailable : PasteReadiness.Direct;
             return;
         }

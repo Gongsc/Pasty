@@ -336,7 +336,7 @@ public sealed partial class MainWindow : Window
         _rows.Clear();
         if (App.ViewModel.Pinned.Count > 0)
         {
-            _rows.Add(new Models.HeaderRow { Title = "\u2606 已置顶" });
+            _rows.Add(new Models.HeaderRow { Title = Localization.Get("PinnedHeader") });
             foreach (var i in App.ViewModel.Pinned) _rows.Add(i);
         }
         // 未置顶记录按最后复制/使用日期分组。今天叫“最近”、昨天单独显示，
@@ -347,10 +347,10 @@ public sealed partial class MainWindow : Window
                      .OrderByDescending(g => g.Key))
         {
             var title = group.Key == today
-                ? "最近"
+                ? Localization.Get("RecentHeader")
                 : group.Key == today.AddDays(-1)
-                    ? "昨天"
-                    : group.Key.ToString("yyyy年M月d日");
+                    ? Localization.Get("YesterdayHeader")
+                    : group.Key.ToString("D", System.Globalization.CultureInfo.CurrentUICulture);
             _rows.Add(new Models.HeaderRow { Title = title });
             foreach (var item in group) _rows.Add(item);
         }
@@ -406,8 +406,8 @@ public sealed partial class MainWindow : Window
             return;
         }
         ListEmptyHint.Text = string.IsNullOrWhiteSpace(App.ViewModel.Filter)
-            ? "还没有剪贴板历史。复制文字、图片或文件，这里就会出现。"
-            : $"没有匹配「{App.ViewModel.Filter}」的记录。搜索会查文字内容与文件名。";
+            ? Localization.Get("EmptyHistory")
+            : Localization.Format("NoMatches", App.ViewModel.Filter);
         ListEmptyHint.Visibility = Visibility.Visible;
     }
 
@@ -448,7 +448,7 @@ public sealed partial class MainWindow : Window
     {
         _editingItem = null;
         EditHost.Visibility = Visibility.Collapsed;
-        PreviewTitle.Text = "全文预览";
+        PreviewTitle.Text = Localization.Get("PreviewTitle");
         PreviewActions.Visibility = Visibility.Visible;
         EditActions.Visibility = Visibility.Collapsed;
     }
@@ -503,7 +503,7 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>与 MainWindow.xaml 里 EmptyHint 的默认文案保持一致。</summary>
-    private const string EmptyHintDefault = "选择左侧条目查看完整内容";
+    private static string EmptyHintDefault => Localization.Get("EmptyPreview");
 
     private void ShowEmptyPreview()
     {
@@ -575,7 +575,7 @@ public sealed partial class MainWindow : Window
         EmptyHint.Visibility = Visibility.Collapsed;
         EditHost.Visibility = Visibility.Visible;
         PreviewEditBox.Text = text ?? item.Text;
-        PreviewTitle.Text = "编辑内容";
+        PreviewTitle.Text = Localization.Get("EditTitle");
         PreviewActions.Visibility = Visibility.Collapsed;
         EditActions.Visibility = Visibility.Visible;
         PreviewEditBox.Focus(FocusState.Programmatic);

@@ -18,6 +18,7 @@ WinUI 3 (Windows App SDK 1.6) + .NET 8 开发的本地剪切板历史管理工�
 - **置顶**：置顶条目排在最前，不受保存时长影响
 - **保存时长**：永久 / 7 / 30 / 90 / 365 天，超期未置顶自动清理；可设最大条数（清理与删除都只删 Pasty 自己存的图片，绝不删用户目录里的原文件）
 - **亮暗色切换**：标题栏一键切换，设置页可选 跟随系统 / 浅色 / 深色
+- **中英文界面**：设置页可选简体中文或 English，重启应用后完整切换
 - **托盘图标**：双击打开面板，右键菜单可打开/设置/关于/退出；关于窗口可手动检查 GitHub Release 更新；关闭窗口仅隐藏到托盘
 
 ## 构建与运行
@@ -35,11 +36,11 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 - `Services/`：Win32 互操作、消息窗口、剪贴板监听、热键/钩子、前台窗口跟踪、粘贴、存储、过期清理、自启、托盘
 - `Views/`：MainWindow（历史列表 + 全文预览）、SettingsWindow（独立设置）、AboutWindow（版本与更新）
 - `doc/`：PLAN.md（初始实施计划）与 icon-preview.html / ui-design.png / ui-mockup.html（设计稿），均为历史参考
-- `.github/workflows/build.yml`：push / PR 自动构建，推 `v*` 标签时把 zip 发布到 GitHub Release
+- `.github/workflows/build.yml`：push / PR 自动构建 Windows 安装包，推 `v*` 标签时把 Setup.exe 发布到 GitHub Release
 
 ## 下载与版本
 
-版本号只写在 `Pasty/Pasty.csproj` 的 `<Version>` 一处，设置页底部、zip 文件名与 Release 标题都从它派生。
+版本号只写在 `Pasty/Pasty.csproj` 的 `<Version>` 一处，设置页底部、安装包文件名与 Release 标题都从它派生。
 发版：改 `<Version>` → 提交 → 创建并推送同名的 `v<版本号>` 标签；CI 会先校验标签与版本号一致，再发布。
 
 ## 许可

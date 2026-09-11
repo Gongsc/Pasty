@@ -15,7 +15,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 `-p:Platform=x64` 只影响输出目录：省掉也能编过，但产物落到 `bin\Debug\` 而非 `bin\x64\Debug\`，与上面的运行路径不符。`dotnet build Pasty.sln` 亦可（sln 把 Any CPU 映射到 x64）。
 
-**CI**：`.github/workflows/build.yml` 在 `windows-latest` 上跑 Release x64 构建，把整个输出目录（自包含，含 Windows App SDK 运行时）压成 zip 传成 artifact；推 `v*` 标签时额外发布到 GitHub Release，并先校验标签与 csproj 的 `<Version>` 一致。
+**CI**：`.github/workflows/build.yml` 在 `windows-latest` 上跑 Release x64 构建，用 Inno Setup 把整个输出目录（自包含，含 Windows App SDK 运行时）制成每用户安装的 `Setup.exe` artifact；推 `v*` 标签时额外发布到 GitHub Release，并先校验标签与 csproj 的 `<Version>` 一致。安装包只保留简体中文与英文的 MUI 目录。
 
 **只有一个实例能活着**：`SingleInstanceService.TryBecomeFirstInstance()` 在 `OnLaunched` 最前面抢一个会话内 Mutex，抢不到的那个只负责投递唤醒消息（把已运行实例的主窗口带到前台）然后立刻退出。以前没有这层保护时，两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
 
@@ -131,5 +131,6 @@ dotnet run --project tools/IconGen -- Pasty/Assets
 
 - 界面文案、代码注释、提交信息全部中文。注释解释**为什么**（多数是某个已修 bug 的成因），改动相关代码时要么保持注释成立，要么一并更新——不要留下描述已不存在行为的注释。
 - **版本号只写 `Pasty.csproj` 的 `<Version>` 一处**，设置页底部读 `App.Version`（从程序集元数据来），CI 的产物名与 Release 标题从 csproj 读。发版同时打一个同名的 `v<版本号>` 标签，CI 会校验两者一致。
+- 界面语言只支持 `zh-CN` 与 `en-US`。XAML 静态文案放在 `Strings/<语言>/Resources.resw` 并通过 `x:Uid` 读取；代码动态文案统一走 `Services/Localization.cs`。语言设置写入 `settings.json`，下次启动时在任何窗口创建前设置 `PrimaryLanguageOverride`。
 - 热键可选组合是 `SettingsWindow.xaml.cs` 里硬编码的 `(名称, modifiers, vk)` 数组，设置里存的是裸的 modifier 位与虚拟键码；加组合改数组即可。
 - `PLAN.md` 是初始实施计划，`ui-mockup.html` / `ui-design.png` 是 UI 设计稿，均为历史参考，不随代码更新。

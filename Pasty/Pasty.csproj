@@ -8,6 +8,9 @@
     <Platforms>x64</Platforms>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
+    <!-- 应用只提供简体中文和英文；同时阻止依赖包把几十种卫星资源复制进输出目录。 -->
+    <DefaultLanguage>zh-CN</DefaultLanguage>
+    <SatelliteResourceLanguages>zh-CN;en-US</SatelliteResourceLanguages>
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
