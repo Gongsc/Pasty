@@ -74,7 +74,7 @@ public static class ForegroundService
 
     private static void Note(IntPtr hwnd)
     {
-        // 自己的窗口（主窗口、设置窗口）不覆盖记录：面板弹出来之后，
+        // 自己的窗口（主窗口、设置窗口）不覆盖记录：主窗口显示之后，
         // 用户"刚从哪儿离开"仍然是那个外部应用
         if (!Win32.IsPasteTarget(hwnd)) return;
         if (IsShellWindow(hwnd)) return;

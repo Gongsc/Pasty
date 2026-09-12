@@ -86,9 +86,9 @@
                                 <RowDefinition Height="32" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock x:Uid="SettingsShowHotkeyTitle" Text="唤出面板快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsShowHotkeyDescription" Text="点击右侧按钮，然后按下新的组合键" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            <Button x:Name="ShowHotkeyButton" x:Uid="SettingsShowHotkeyButton" Content="Ctrl + Shift + V"
+                            <TextBlock x:Uid="SettingsOpenWindowHotkeyTitle" Text="打开主窗口快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsOpenWindowHotkeyDescription" Text="点击右侧按钮，然后按下新的组合键" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <Button x:Name="OpenWindowHotkeyButton" x:Uid="SettingsOpenWindowHotkeyButton" Content="Ctrl + Shift + V"
                                     Click="HotkeyButton_Click" PreviewKeyDown="HotkeyButton_PreviewKeyDown" LostFocus="HotkeyButton_LostFocus"
                                     Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
                         </Grid>
@@ -117,7 +117,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock x:Uid="SettingsOverrideTitle" Text="覆盖系统 Ctrl+V" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsOverrideDescription" Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <TextBlock x:Uid="SettingsOverrideDescription" Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在主窗口中选择其他条目" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
                             <ToggleSwitch x:Name="OverrideToggle" x:Uid="SettingsOverrideToggle" AutomationProperties.Name="覆盖系统 Ctrl+V" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
                         <InfoBar x:Name="HotkeyCaptureInfo" Severity="Informational" IsOpen="False" IsClosable="False" Margin="0,6,0,0" />
@@ -172,13 +172,9 @@
                                 <RowDefinition Height="32" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock x:Uid="SettingsThemeTitle" Text="主题" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsThemeDescription" Text="浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            <ComboBox x:Name="ThemeCombo" x:Uid="SettingsThemeCombo" AutomationProperties.Name="主题" SelectionChanged="Theme_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
-                                <ComboBoxItem x:Uid="ThemeSystem" Content="跟随系统" Tag="0" />
-                                <ComboBoxItem x:Uid="ThemeLight" Content="浅色" Tag="1" />
-                                <ComboBoxItem x:Uid="ThemeDark" Content="深色" Tag="2" />
-                            </ComboBox>
+                            <TextBlock x:Uid="SettingsHideMainWindowTitle" Text="主窗口失焦自动关闭" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsHideMainWindowDescription" Text="切换到其他窗口时自动隐藏到托盘" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ToggleSwitch x:Name="HideMainWindowOnDeactivateToggle" x:Uid="SettingsHideMainWindowToggle" AutomationProperties.Name="主窗口失焦自动关闭" Toggled="HideMainWindowOnDeactivate_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
@@ -189,9 +185,13 @@
                                 <RowDefinition Height="32" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <TextBlock x:Uid="SettingsHideTitle" Text="面板失焦自动隐藏" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsHideDescription" Text="快捷键唤出的面板在切换到其他窗口时自动隐藏" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            <ToggleSwitch x:Name="HideOnDeactivateToggle" x:Uid="SettingsHideToggle" AutomationProperties.Name="面板失焦自动隐藏" Toggled="HideOnDeactivate_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
+                            <TextBlock x:Uid="SettingsThemeTitle" Text="主题" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Uid="SettingsThemeDescription" Text="浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <ComboBox x:Name="ThemeCombo" x:Uid="SettingsThemeCombo" AutomationProperties.Name="主题" SelectionChanged="Theme_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                <ComboBoxItem x:Uid="ThemeSystem" Content="跟随系统" Tag="0" />
+                                <ComboBoxItem x:Uid="ThemeLight" Content="浅色" Tag="1" />
+                                <ComboBoxItem x:Uid="ThemeDark" Content="深色" Tag="2" />
+                            </ComboBox>
                         </Grid>
                     </StackPanel>
                 </Border>

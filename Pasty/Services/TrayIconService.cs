@@ -6,7 +6,7 @@ using Pasty.Views;
 
 namespace Pasty.Services;
 
-/// <summary>系统托盘图标：双击打开面板，右键菜单（打开/设置/关于/退出）。</summary>
+/// <summary>系统托盘图标：双击打开主窗口，右键菜单（打开/设置/关于/退出）。</summary>
 public sealed class TrayIconService
 {
     private static IntPtr s_hwnd;

@@ -19,10 +19,10 @@
                 <Button x:Name="OpenItem" x:Uid="TrayOpen" Click="Open_Click" Height="36"
                         HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
                         Background="Transparent" BorderThickness="0" CornerRadius="6"
-                        AutomationProperties.Name="打开面板">
+                        AutomationProperties.Name="打开主窗口">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A7;" FontSize="14" />
-                        <TextBlock x:Uid="TrayOpenText" Text="打开面板" FontSize="12.5" VerticalAlignment="Center" />
+                        <TextBlock x:Uid="TrayOpenText" Text="打开主窗口" FontSize="12.5" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
                 <Button x:Uid="TraySettings" Click="Settings_Click" Height="36"

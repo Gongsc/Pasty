@@ -80,7 +80,7 @@ public class ClipItem
         }
     }
 
-    /// <summary>悬停在图标上、以及预览面板底部要显示的那句说明。</summary>
+    /// <summary>悬停在图标上、以及预览区底部要显示的那句说明。</summary>
     [JsonIgnore]
     public string ReadinessHint => Readiness switch
     {
@@ -115,7 +115,7 @@ public class ClipItem
         }
     }
 
-    /// <summary>预览面板里的全文：文件条目显示路径清单，并标出哪些已经不在了。</summary>
+    /// <summary>预览区里的全文：文件条目显示路径清单，并标出哪些已经不在了。</summary>
     [JsonIgnore]
     public string FullPreviewText
     {

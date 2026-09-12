@@ -10,7 +10,7 @@ namespace Pasty.Services;
 /// </summary>
 public sealed class HotkeyService : IDisposable
 {
-    private const int IdShowPanel = 1;
+    private const int IdOpenWindow = 1;
     private const int IdPasteTop = 2;
 
     private readonly IntPtr _hwnd;
@@ -48,7 +48,7 @@ public sealed class HotkeyService : IDisposable
     public static IntPtr ConsumeLastForegroundWindow()
         => Interlocked.Exchange(ref s_lastForegroundWindow, IntPtr.Zero);
 
-    public event Action? ShowPanelRequested;
+    public event Action? OpenWindowRequested;
     public event Action? PasteTopRequested;
 
     public HotkeyService(MessageWindow messageWindow)
@@ -63,11 +63,11 @@ public sealed class HotkeyService : IDisposable
 
     public void ReRegister()
     {
-        Win32.UnregisterHotKey(_hwnd, IdShowPanel);
+        Win32.UnregisterHotKey(_hwnd, IdOpenWindow);
         Win32.UnregisterHotKey(_hwnd, IdPasteTop);
 
         var errors = new List<string>();
-        TryRegister(IdShowPanel, App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk, Localization.Get("ShowPanelHotkey"), errors);
+        TryRegister(IdOpenWindow, App.Settings.OpenWindowHotkeyModifiers, App.Settings.OpenWindowHotkeyVk, Localization.Get("OpenWindowHotkey"), errors);
         TryRegister(IdPasteTop, App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk, Localization.Get("PasteLatestHotkey"), errors);
 
         OverrideCtrlV = App.Settings.OverrideCtrlV;
@@ -86,7 +86,7 @@ public sealed class HotkeyService : IDisposable
     /// </summary>
     public void SuspendRegistration()
     {
-        Win32.UnregisterHotKey(_hwnd, IdShowPanel);
+        Win32.UnregisterHotKey(_hwnd, IdOpenWindow);
         Win32.UnregisterHotKey(_hwnd, IdPasteTop);
     }
 
@@ -103,10 +103,10 @@ public sealed class HotkeyService : IDisposable
     {
         if (msg != Win32.WM_HOTKEY) return false;
         var id = wParam.ToInt32();
-        if (id == IdShowPanel)
+        if (id == IdOpenWindow)
         {
             s_lastForegroundWindow = Win32.GetForegroundWindow();
-            _dispatcher.TryEnqueue(() => ShowPanelRequested?.Invoke());
+            _dispatcher.TryEnqueue(() => OpenWindowRequested?.Invoke());
             return true;
         }
         if (id == IdPasteTop)
@@ -175,7 +175,7 @@ public sealed class HotkeyService : IDisposable
     public void Dispose()
     {
         if (_hook != IntPtr.Zero) Win32.UnhookWindowsHookEx(_hook);
-        Win32.UnregisterHotKey(_hwnd, IdShowPanel);
+        Win32.UnregisterHotKey(_hwnd, IdOpenWindow);
         Win32.UnregisterHotKey(_hwnd, IdPasteTop);
     }
 }

@@ -36,7 +36,7 @@ public sealed partial class SettingsWindow : Window
 
         OverrideToggle.IsOn = App.Settings.OverrideCtrlV;
         StartupToggle.IsOn = StartupService.IsEnabled();
-        HideOnDeactivateToggle.IsOn = App.Settings.HideOnDeactivate;
+        HideMainWindowOnDeactivateToggle.IsOn = App.Settings.HideMainWindowOnDeactivate;
         SelectByTag(ThemeCombo, App.Settings.Theme);
         SelectByTag(LanguageCombo, Localization.CurrentLanguage);
         _loading = false;
@@ -119,13 +119,13 @@ public sealed partial class SettingsWindow : Window
 
     private void RefreshHotkeyButtons()
     {
-        ShowHotkeyButton.Content = AppSettings.HotkeyName(
-            App.Settings.ShowHotkeyModifiers, App.Settings.ShowHotkeyVk);
+        OpenWindowHotkeyButton.Content = AppSettings.HotkeyName(
+            App.Settings.OpenWindowHotkeyModifiers, App.Settings.OpenWindowHotkeyVk);
         PasteHotkeyButton.Content = AppSettings.HotkeyName(
             App.Settings.PasteTopHotkeyModifiers, App.Settings.PasteTopHotkeyVk);
         ResetHotkeysButton.IsEnabled =
-            App.Settings.ShowHotkeyModifiers != AppSettings.DefaultShowHotkeyModifiers ||
-            App.Settings.ShowHotkeyVk != AppSettings.DefaultShowHotkeyVk ||
+            App.Settings.OpenWindowHotkeyModifiers != AppSettings.DefaultOpenWindowHotkeyModifiers ||
+            App.Settings.OpenWindowHotkeyVk != AppSettings.DefaultOpenWindowHotkeyVk ||
             App.Settings.PasteTopHotkeyModifiers != AppSettings.DefaultPasteHotkeyModifiers ||
             App.Settings.PasteTopHotkeyVk != AppSettings.DefaultPasteHotkeyVk;
     }
@@ -163,13 +163,13 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        var editingShowHotkey = ReferenceEquals(_recordingHotkeyButton, ShowHotkeyButton);
-        var otherModifiers = editingShowHotkey
+        var editingOpenWindowHotkey = ReferenceEquals(_recordingHotkeyButton, OpenWindowHotkeyButton);
+        var otherModifiers = editingOpenWindowHotkey
             ? App.Settings.PasteTopHotkeyModifiers
-            : App.Settings.ShowHotkeyModifiers;
-        var otherVk = editingShowHotkey
+            : App.Settings.OpenWindowHotkeyModifiers;
+        var otherVk = editingOpenWindowHotkey
             ? App.Settings.PasteTopHotkeyVk
-            : App.Settings.ShowHotkeyVk;
+            : App.Settings.OpenWindowHotkeyVk;
         if (modifiers == otherModifiers && vk == otherVk)
         {
             HotkeyCaptureInfo.Severity = InfoBarSeverity.Warning;
@@ -177,10 +177,10 @@ public sealed partial class SettingsWindow : Window
             return;
         }
 
-        if (editingShowHotkey)
+        if (editingOpenWindowHotkey)
         {
-            App.Settings.ShowHotkeyModifiers = modifiers;
-            App.Settings.ShowHotkeyVk = vk;
+            App.Settings.OpenWindowHotkeyModifiers = modifiers;
+            App.Settings.OpenWindowHotkeyVk = vk;
         }
         else
         {
@@ -223,8 +223,8 @@ public sealed partial class SettingsWindow : Window
     private void ResetHotkeys_Click(object sender, RoutedEventArgs e)
     {
         EndHotkeyCapture();
-        App.Settings.ShowHotkeyModifiers = AppSettings.DefaultShowHotkeyModifiers;
-        App.Settings.ShowHotkeyVk = AppSettings.DefaultShowHotkeyVk;
+        App.Settings.OpenWindowHotkeyModifiers = AppSettings.DefaultOpenWindowHotkeyModifiers;
+        App.Settings.OpenWindowHotkeyVk = AppSettings.DefaultOpenWindowHotkeyVk;
         App.Settings.PasteTopHotkeyModifiers = AppSettings.DefaultPasteHotkeyModifiers;
         App.Settings.PasteTopHotkeyVk = AppSettings.DefaultPasteHotkeyVk;
         Save();
@@ -248,10 +248,10 @@ public sealed partial class SettingsWindow : Window
         StartupService.SetEnabled(StartupToggle.IsOn);
     }
 
-    private void HideOnDeactivate_Toggled(object sender, RoutedEventArgs e)
+    private void HideMainWindowOnDeactivate_Toggled(object sender, RoutedEventArgs e)
     {
         if (_loading) return;
-        App.Settings.HideOnDeactivate = HideOnDeactivateToggle.IsOn;
+        App.Settings.HideMainWindowOnDeactivate = HideMainWindowOnDeactivateToggle.IsOn;
         Save();
     }
 

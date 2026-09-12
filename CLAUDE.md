@@ -19,7 +19,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 **只有一个实例能活着**：`SingleInstanceService.TryBecomeFirstInstance()` 在 `OnLaunched` 最前面抢一个会话内 Mutex，抢不到的那个只负责投递唤醒消息（把已运行实例的主窗口带到前台）然后立刻退出。以前没有这层保护时，两个进程会同时抢 `RegisterHotKey`、同时装键盘钩子，表现为新实例的设置页弹出"快捷键已被占用"，而按键被旧进程处理。
 
-**没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片/文件 → 列表出现（图标按类型区分、能直接粘的行有主色竖条）→ `Ctrl+Shift+V` 唤出面板 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
+**没有测试项目、没有 lint 配置。** 编译通过几乎说明不了什么——粘贴链路、键盘钩子、剪贴板读写的正确性只能实机验证：复制文本/图片/文件 → 列表出现（图标按类型区分、能直接粘的行有主色竖条）→ `Ctrl+Shift+V` 打开完整主窗口 → Enter / `Ctrl+Alt+V` / `Ctrl+V` 粘贴到别的应用 → 编辑/置顶/删除 → 改保存天数后清理生效。
 
 验证界面时注意：**屏幕抓不到 WinUI 3 的窗口内容**（`CopyFromScreen` 与 `PrintWindow(PW_RENDERFULLCONTENT)` 截出来都是黑块，其他应用正常）。可行的办法是用 UI Automation 读元素树（PowerShell 的 `System.Windows.Automation`）：列表项里只有可见元素会进树，所以行内 Text 的 Name 能直接验到类型标签、meta 文案与“图标只剩一个”这类可见性结论；再配合 `InvokePattern` 点“复制”、用 `DragQueryFileW` 读回 `CF_HDROP`，就能不靠眼睛跑完整条链路。
 
@@ -38,7 +38,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 ### `StorageService.Items` 是唯一数据源
 `MainViewModel.All` 就是它的别名；`Pinned` / `Recent` 两个 `ObservableCollection` 是派生视图，每次变更整体重建（`RebuildGroups` → `GroupsChanged` → `MainWindow.UpdateGroups` 再重建 `_rows` 行集合，含分组标题 `HeaderRow`）。
 
-所有增删改必须走 `MainViewModel` 的方法（它们负责重建分组并调用 `StorageService.Save()`）；直接改 `StorageService.Items` 会让 UI 和磁盘都不同步。列表重建会踩掉预览面板的编辑态，`UpdateGroups` 因此专门保存/恢复未提交的文本与光标位置。
+所有增删改必须走 `MainViewModel` 的方法（它们负责重建分组并调用 `StorageService.Save()`）；直接改 `StorageService.Items` 会让 UI 和磁盘都不同步。列表重建会踩掉预览区的编辑态，`UpdateGroups` 因此专门保存/恢复未提交的文本与光标位置。
 
 ### 落盘：合并队列 + 退出必须显式 Flush
 `Save()` 只登记最新快照并保证全程只有一个后台写入任务（顺序写、`tmp` + `File.Move` 原子替换）。因此**退出路径必须走 `App.Exit()`**：它按 `Hotkeys.Dispose` → `ForegroundService.Stop` → 托盘移除 → `StorageService.Flush()`（同步落盘）→ `Trace.Flush()` → `Current.Exit()` 的顺序收尾。直接调 `Application.Current.Exit()` 会丢掉最后一批改动。
@@ -52,7 +52,7 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 - **任何写剪贴板的代码写完后要调 `ClipboardMonitor.MarkSelfWrite()`；什么都没写时绝不能调。** `Suspended` 布尔量单独不够用：`WM_CLIPBOARDUPDATE` 是投递消息，到达时同步段早已把标志复位，真正的过滤靠 `GetClipboardSequenceNumber()` 比较。空写却推进序号会连带吞掉用户的下一次复制。
 - **粘贴目标绝不能只靠热键那一刻的缓存。** 热键缓存是"取用即清除"的（`HotkeyService.ConsumeLastForegroundWindow()`），只对紧随触发的那一次粘贴有效；留着不清会让几小时前按热键时记下的窗口继续被当成目标，而那个句柄可能已销毁并被回收给别的进程。**鼠标操作（双击条目、点"粘贴"按钮）没有那样的触发时刻可记**，早先因此退回 `GetForegroundWindow()` 拿到 Pasty 自己，`IsPasteTarget` 不通过就只写剪贴板不发按键，用户看到的就是"条目跳到最顶端、目标应用里什么都没出现"。这就是 `ForegroundService` 存在的理由，别把它删了退回单级缓存。
-- **任何候选句柄用之前都要过 `Win32.IsPasteTarget()`**（存活、可见、不属于本进程）。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。`ForegroundService` 的回调跑在 UI 线程的消息泵上，和键盘钩子一样不许做耗时事，只记句柄；它刻意忽略自己的窗口（否则面板一弹出就把目标覆盖成面板自己），并跳过任务栏/桌面这类“不是任何应用”的窗口。
+- **任何候选句柄用之前都要过 `Win32.IsPasteTarget()`**（存活、可见、不属于本进程）。目标无效时 `PasteAsync` 只写剪贴板、不发按键，而不是整个跳过。`ForegroundService` 的回调跑在 UI 线程的消息泵上，和键盘钩子一样不许做耗时事，只记句柄；它刻意忽略自己的窗口（否则主窗口显示后会把目标覆盖成自己），并跳过任务栏/桌面这类“不是任何应用”的窗口。
 - **内容已经不在了的条目（`Readiness == Unavailable`）一个字节都不写**。`PasteAsync` 开头就退出，`WriteToClipboardAsync` 对文件条目要求每个路径都还在才写：把不存在的路径塞进剪贴板，目标应用只会报“找不到文件”，而 `EmptyClipboard` 已经先把用户原本的内容清掉了。宁可什么都不做。
 
 ### 低级键盘钩子的硬约束（`HotkeyService.LowLevelHook`）
@@ -60,10 +60,10 @@ dotnet build Pasty/Pasty.csproj -c Debug -p:Platform=x64
 
 被吞掉的 V 抬键必须无条件复位 `_vKeyDown` 并一并吞掉，否则物理状态会卡住或把半截按键交给目标应用。`SendCtrlV()` 注入的每个按键都带 `PastyInjectedInput` 标记，钩子必须优先放行；用户仍按着物理 Ctrl 时只能注入 V，不能注入 Ctrl 抬起，否则下一次 V 会退化成裸字母。钩子只在启动时装一次，`ReRegister()` 只更新开关并在钩子缺失时报错。
 
-### 主窗口是一个窗口的两种形态
-`MainWindow._panelMode`：`ShowAsPanel()` 缩到 440×520 并定位到光标处，`ShowAsWindow()` 恢复 1060×680（少了这次 Resize，托盘打开的窗口会一直是面板宽度）。尺寸常量是**逻辑像素**，`AppWindow.Resize/Move` 收的是**物理像素**，必须经 `Scaled()` 按 `GetDpiForWindow` 换算。定位用 `FitInto` 而非 `Math.Clamp`（工作区比窗口还小时 `Clamp` 会因 min > max 抛异常）。关闭按钮被 `AppWindow.Closing` 拦下改为隐藏到托盘。
+### 主窗口与托盘启动
+`MainWindow` 只有 1060×680 的完整窗口形态，托盘与打开窗口快捷键都显示同一个窗口，不再缩小到光标位置。尺寸常量是**逻辑像素**，`AppWindow.Resize` 收的是**物理像素**，必须经 `Scaled()` 按 `GetDpiForWindow` 换算。关闭按钮被 `AppWindow.Closing` 拦下改为隐藏到托盘；失焦时默认也会隐藏到托盘，用户可在设置中关闭该行为。
 
-应用首次启动只驻留托盘：`App.OnLaunched` 会创建 `MainWindow` 供托盘、快捷键和单实例唤醒复用，但不能调用 `Activate()`。用户从托盘打开、按唤出快捷键或再次运行程序时才显示窗口。
+应用首次启动只驻留托盘：`App.OnLaunched` 会创建 `MainWindow` 供托盘、快捷键和单实例唤醒复用，但不能调用 `Activate()`。用户从托盘打开、按打开窗口快捷键或再次运行程序时才显示窗口。
 
 主题走 `RootGrid.RequestedTheme`（每窗口），`App.ApplyTheme()` 统一分发到主窗口与设置窗口。
 

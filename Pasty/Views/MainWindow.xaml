@@ -59,12 +59,12 @@
             </StackPanel>
         </Grid>
 
-        <!-- 主体：左列表 + 右预览。面板形态下预览整列折叠，见 SetPreviewVisible() -->
+        <!-- 主体：左侧历史列表 + 右侧完整预览。 -->
         <Grid Grid.Row="1" Padding="10,4,10,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="ListColumn" Width="340" />
+                <ColumnDefinition Width="340" />
                 <ColumnDefinition x:Name="DividerColumn" Width="Auto" />
-                <ColumnDefinition x:Name="PreviewColumn" Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- 历史列表 -->
@@ -198,10 +198,10 @@
                            Margin="16,48,16,0" HorizontalAlignment="Center" VerticalAlignment="Top" />
             </Grid>
 
-            <Border x:Name="PreviewDivider" Grid.Column="1" Width="1" Margin="10,6"
+            <Border Grid.Column="1" Width="1" Margin="10,6"
                     Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
             <!-- 全文预览 -->
-            <Grid Grid.Column="2" Margin="4,6,0,0" x:Name="PreviewArea">
+            <Grid Grid.Column="2" Margin="4,6,0,0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />

@@ -7,21 +7,21 @@ public class AppSettings
 {
     public const uint MOD_ALT = 0x1, MOD_CONTROL = 0x2, MOD_SHIFT = 0x4, MOD_WIN = 0x8;
     public const uint VK_V = 0x56;
-    public const uint DefaultShowHotkeyModifiers = MOD_CONTROL | MOD_SHIFT;
-    public const uint DefaultShowHotkeyVk = VK_V;
+    public const uint DefaultOpenWindowHotkeyModifiers = MOD_CONTROL | MOD_SHIFT;
+    public const uint DefaultOpenWindowHotkeyVk = VK_V;
     public const uint DefaultPasteHotkeyModifiers = MOD_CONTROL | MOD_ALT;
     public const uint DefaultPasteHotkeyVk = VK_V;
 
     public int RetentionDays { get; set; } = 0;          // 0 = 永久
     public int MaxItems { get; set; } = 500;
-    public uint ShowHotkeyModifiers { get; set; } = DefaultShowHotkeyModifiers;
-    public uint ShowHotkeyVk { get; set; } = DefaultShowHotkeyVk;
+    public uint OpenWindowHotkeyModifiers { get; set; } = DefaultOpenWindowHotkeyModifiers;
+    public uint OpenWindowHotkeyVk { get; set; } = DefaultOpenWindowHotkeyVk;
     public uint PasteTopHotkeyModifiers { get; set; } = DefaultPasteHotkeyModifiers;
     public uint PasteTopHotkeyVk { get; set; } = DefaultPasteHotkeyVk;
     public bool OverrideCtrlV { get; set; } = true;
     public bool AutoStart { get; set; }
+    public bool HideMainWindowOnDeactivate { get; set; } = true;
     public int Theme { get; set; } = 0;                  // 0 跟随系统 1 浅色 2 深色
-    public bool HideOnDeactivate { get; set; } = true;
     public string Language { get; set; } = string.Empty; // 空值首次启动时：中文系统用中文，其余系统用英文
 
     private static string FilePath =>

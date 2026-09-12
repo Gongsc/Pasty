@@ -50,30 +50,30 @@
   <data name="SettingsMaxItemsCombo.AutomationProperties.Name" xml:space="preserve"><value>最大条数</value></data>
   <data name="SettingsClearButton.Content" xml:space="preserve"><value>清空全部历史</value></data>
   <data name="SettingsHotkeysSection.Text" xml:space="preserve"><value>快捷键</value></data>
-  <data name="SettingsShowHotkeyTitle.Text" xml:space="preserve"><value>唤出面板快捷键</value></data>
-  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>点击右侧按钮，然后按下新的组合键</value></data>
-  <data name="SettingsShowHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>自定义唤出面板快捷键</value></data>
+  <data name="SettingsOpenWindowHotkeyTitle.Text" xml:space="preserve"><value>打开主窗口快捷键</value></data>
+  <data name="SettingsOpenWindowHotkeyDescription.Text" xml:space="preserve"><value>点击右侧按钮，然后按下新的组合键</value></data>
+  <data name="SettingsOpenWindowHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>自定义打开主窗口快捷键</value></data>
   <data name="SettingsPasteHotkeyTitle.Text" xml:space="preserve"><value>粘贴第一条快捷键</value></data>
   <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>点击右侧按钮，然后按下新的组合键</value></data>
   <data name="SettingsPasteHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>自定义粘贴第一条快捷键</value></data>
   <data name="SettingsResetHotkeysButton.Content" xml:space="preserve"><value>恢复默认快捷键</value></data>
   <data name="SettingsOverrideTitle.Text" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>
-  <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴</value></data>
+  <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>开启后按下 Ctrl+V 将粘贴历史第一条；可在主窗口中选择其他条目</value></data>
   <data name="SettingsOverrideToggle.AutomationProperties.Name" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>
   <data name="SettingsHotkeyWarning.Title" xml:space="preserve"><value>快捷键未生效</value></data>
   <data name="SettingsAppSection.Text" xml:space="preserve"><value>应用</value></data>
   <data name="SettingsStartupTitle.Text" xml:space="preserve"><value>开机自动启动</value></data>
   <data name="SettingsStartupDescription.Text" xml:space="preserve"><value>登录 Windows 后在后台运行</value></data>
   <data name="SettingsStartupToggle.AutomationProperties.Name" xml:space="preserve"><value>开机自动启动</value></data>
+  <data name="SettingsHideMainWindowTitle.Text" xml:space="preserve"><value>主窗口失焦自动关闭</value></data>
+  <data name="SettingsHideMainWindowDescription.Text" xml:space="preserve"><value>切换到其他窗口时自动隐藏到托盘</value></data>
+  <data name="SettingsHideMainWindowToggle.AutomationProperties.Name" xml:space="preserve"><value>主窗口失焦自动关闭</value></data>
   <data name="SettingsThemeTitle.Text" xml:space="preserve"><value>主题</value></data>
   <data name="SettingsThemeDescription.Text" xml:space="preserve"><value>浅色 / 深色 / 跟随系统；标题栏按钮可随时一键切换</value></data>
   <data name="SettingsThemeCombo.AutomationProperties.Name" xml:space="preserve"><value>主题</value></data>
   <data name="ThemeSystem.Content" xml:space="preserve"><value>跟随系统</value></data>
   <data name="ThemeLight.Content" xml:space="preserve"><value>浅色</value></data>
   <data name="ThemeDark.Content" xml:space="preserve"><value>深色</value></data>
-  <data name="SettingsHideTitle.Text" xml:space="preserve"><value>面板失焦自动隐藏</value></data>
-  <data name="SettingsHideDescription.Text" xml:space="preserve"><value>快捷键唤出的面板在切换到其他窗口时自动隐藏</value></data>
-  <data name="SettingsHideToggle.AutomationProperties.Name" xml:space="preserve"><value>面板失焦自动隐藏</value></data>
   <data name="SettingsLanguageTitle.Text" xml:space="preserve"><value>语言</value></data>
   <data name="SettingsLanguageDescription.Text" xml:space="preserve"><value>界面语言；重新启动 Pasty 后生效</value></data>
   <data name="SettingsLanguageCombo.AutomationProperties.Name" xml:space="preserve"><value>语言</value></data>
@@ -88,8 +88,8 @@
   <data name="AboutDownload.Content" xml:space="preserve"><value>前往下载</value></data>
   <data name="AboutDownload.AutomationProperties.Name" xml:space="preserve"><value>前往下载新版本</value></data>
 
-  <data name="TrayOpen.AutomationProperties.Name" xml:space="preserve"><value>打开面板</value></data>
-  <data name="TrayOpenText.Text" xml:space="preserve"><value>打开面板</value></data>
+  <data name="TrayOpen.AutomationProperties.Name" xml:space="preserve"><value>打开主窗口</value></data>
+  <data name="TrayOpenText.Text" xml:space="preserve"><value>打开主窗口</value></data>
   <data name="TraySettings.AutomationProperties.Name" xml:space="preserve"><value>设置</value></data>
   <data name="TraySettingsText.Text" xml:space="preserve"><value>设置</value></data>
   <data name="TrayAbout.AutomationProperties.Name" xml:space="preserve"><value>关于</value></data>

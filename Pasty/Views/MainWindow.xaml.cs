@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Windowing;
 using Windows.Graphics;
 using Pasty.Models;
 using Pasty.Services;
@@ -31,12 +30,9 @@ public sealed partial class MainWindow : Window
     public static new MainWindow? Current { get; private set; }
 
     // 逻辑像素；AppWindow 收的是物理像素，用时按 DPI 换算
-    private const int PanelWidth = 440;
-    private const int PanelHeight = 520;
     private const int WindowWidth = 1060;
     private const int WindowHeight = 680;
 
-    private bool _panelMode;
     private bool _suppressSelection;
     private readonly ObservableCollection<object> _rows = new();
     private ClipItem? _selectedItem;
@@ -60,21 +56,21 @@ public sealed partial class MainWindow : Window
         App.ViewModel.GroupsChanged += UpdateGroups;
         UpdateGroups();
 
-        RootGrid.KeyDown += RootGrid_KeyDown;
         SearchBox.KeyDown += SearchBox_KeyDown;
         // ListViewItem 会先处理 Enter 和方向键，普通 KeyDown 有时收不到；预览事件在它之前拦截。
         ItemsList.PreviewKeyDown += ItemsList_KeyDown;
 
         Activated += (s, e) =>
         {
+            // “关闭”仍然是隐藏到托盘，后台剪贴板监听不能随主窗口失焦退出。
             if (e.WindowActivationState == WindowActivationState.Deactivated &&
-                _panelMode && App.Settings.HideOnDeactivate)
-                HidePanel();
+                App.Settings.HideMainWindowOnDeactivate)
+                AppWindow.Hide();
         };
         AppWindow.Closing += (s, e) =>
         {
             e.Cancel = true;
-            HidePanel();
+            AppWindow.Hide();
         };
         UpdateThemeIcon();
         // 图标配色与置灰文字是代码里按当前窗口主题取的（见 KindBrush），模板又是 OneTime 绑定，
@@ -118,29 +114,7 @@ public sealed partial class MainWindow : Window
         TitleBarActions.Margin = new Thickness(0, 0, inset > 0 ? inset : 138, 0);
     }
 
-    /// <summary>
-    /// 面板形态下把右侧预览整列折叠掉。列宽写死成 340 + *，在 440 宽的面板里
-    /// 预览列只剩几十像素，标题和三个按钮会挤成一团；这时列表应该独占整个宽度。
-    /// </summary>
-    private void SetPreviewVisible(bool visible)
-    {
-        if (visible)
-        {
-            ListColumn.Width = new GridLength(340);
-            PreviewColumn.Width = new GridLength(1, GridUnitType.Star);
-        }
-        else
-        {
-            ListColumn.Width = new GridLength(1, GridUnitType.Star);
-            PreviewColumn.Width = new GridLength(0);
-        }
-        // 分隔线所在的列是 Auto，线一折叠这一列自然就归零
-        var v = visible ? Visibility.Visible : Visibility.Collapsed;
-        PreviewDivider.Visibility = v;
-        PreviewArea.Visibility = v;
-    }
-
-    // ---------- 显示形态 ----------
+    // ---------- 显示与隐藏 ----------
 
     /// <summary>把逻辑尺寸换算成当前显示器的物理像素。</summary>
     private SizeInt32 Scaled(int width, int height)
@@ -150,72 +124,36 @@ public sealed partial class MainWindow : Window
         return new SizeInt32((int)Math.Round(width * scale), (int)Math.Round(height * scale));
     }
 
-    /// <summary>
-    /// 把 desired 夹到 [origin, origin + extent - size] 内。
-    /// 直接用 Math.Clamp 在窗口比工作区还大时会因 min &gt; max 抛 ArgumentException，
-    /// 而这条路径由热键触发、异常被 App 的兜底处理器吞掉，表现就是面板压根不出现。
-    /// </summary>
-    private static int FitInto(int desired, int origin, int extent, int size)
-        => extent <= size ? origin : Math.Clamp(desired, origin, origin + extent - size);
-
-    public void ShowAsPanel()
+    public void ShowMainWindow()
     {
-        _panelMode = true;
-        SetPreviewVisible(false);
-        Win32.GetCursorPos(out var p);
-        var area = DisplayArea.GetFromPoint(new PointInt32(p.X, p.Y), DisplayAreaFallback.Nearest);
-
-        // 必须真的缩到面板尺寸再定位。原先只算了 440×520 的坐标却没有 Resize，
-        // 窗口仍是 1060×680，于是按面板宽度居中的结果是整个窗口大幅偏出光标右侧。
-        var size = Scaled(PanelWidth, PanelHeight);
-        AppWindow.Resize(size);
-
-        var x = FitInto(p.X - size.Width / 2, area.WorkArea.X, area.WorkArea.Width, size.Width);
-        var y = FitInto(p.Y + 12, area.WorkArea.Y, area.WorkArea.Height, size.Height);
-        AppWindow.Move(new PointInt32(x, y));
-        AppWindow.Show(activateWindow: true);
-        Activate();
-        // WinUI 的 Activate() 不保证抢到前台，必须显式强制，否则面板收不到键盘输入
-        Win32.ForceForeground(_hwnd);
-        Activate();
-        // 面板默认落在“最近”里的第一条，不让置顶项改变每次唤出后的默认粘贴对象。
-        SelectItem(App.ViewModel.Recent.FirstOrDefault());
-        SearchBox.Focus(FocusState.Programmatic);
-        SearchBox.SelectAll();
-    }
-
-    public void ShowAsWindow()
-    {
-        // 从面板形态切回来时必须恢复尺寸，否则托盘打开的主窗口会一直是 440 宽的面板
-        if (_panelMode) AppWindow.Resize(Scaled(WindowWidth, WindowHeight));
-        _panelMode = false;
-        SetPreviewVisible(true);
         AppWindow.Show(activateWindow: true);
         Activate();
         EnsureSelection();
     }
 
-    public void EnsureVisible() => ShowAsWindow();
+    /// <summary>
+    /// 全局快捷键从后台唤起完整主窗口。Activate 不一定能抢到前台，仍需走
+    /// ForceForeground；并把焦点交给搜索框，保留方向键选择与 Enter 粘贴体验。
+    /// </summary>
+    public void ShowFromHotkey()
+    {
+        ShowMainWindow();
+        Win32.ForceForeground(_hwnd);
+        Activate();
+        SelectItem(App.ViewModel.Recent.FirstOrDefault());
+        SearchBox.Focus(FocusState.Programmatic);
+        SearchBox.SelectAll();
+    }
 
     /// <summary>
     /// 被第二个实例唤起：确保窗口可见、尺寸正确，并真的抢到前台。
-    /// 光靠 ShowAsWindow 里的 Activate 不够——发起唤起的进程正在退出、本进程又不是前台，
+    /// 光靠 ShowMainWindow 里的 Activate 不够——发起唤起的进程正在退出、本进程又不是前台，
     /// 系统会拒给普通 SetForegroundWindow，必须走 ForceForeground 那套附线程输入的强切。
     /// </summary>
     public void WakeUp()
     {
-        ShowAsWindow();
+        ShowMainWindow();
         Win32.ForceForeground(_hwnd, tickAlt: true);
-    }
-
-    public void HidePanel()
-    {
-        AppWindow.Hide();
-    }
-
-    public void HideIfPanel()
-    {
-        if (_panelMode) HidePanel();
     }
 
     public void ShowSettingsWindow() => (App.Current as App)!.OpenSettingsWindow();
@@ -444,7 +382,7 @@ public sealed partial class MainWindow : Window
     // ---------- 预览 ----------
 
     /// <summary>
-    /// 把预览面板从编辑态整体切回只读态。标题、两组按钮和编辑框必须一起复位：
+    /// 把预览区从编辑态整体切回只读态。标题、两组按钮和编辑框必须一起复位：
     /// 只清 _editingItem 和 EditHost 会留下“编辑内容 + 保存/取消”的空壳界面，
     /// 而此时 _editingItem 已为 null，点“保存”走到 EndEdit 会直接返回，按钮形同失效。
     /// </summary>
@@ -541,25 +479,22 @@ public sealed partial class MainWindow : Window
     private async Task PasteItemAsync(ClipItem item)
     {
         // 目标窗口的解析见 ForegroundService.ResolvePasteTarget：
-        // 热键唤出的面板有“触发那一刻”可记，而鼠标双击与“粘贴”按钮没有，
+        // 唤起窗口的热键有“触发那一刻”可记，而鼠标双击与“粘贴”按钮没有，
         // 以前只能退回 GetForegroundWindow()——那是 Pasty 自己，校验不通过就只写剪贴板不发按键，
         // 用户看到的就是“条目跳到了最顶端，目标应用里什么都没出现”
         var target = ForegroundService.ResolvePasteTarget();
 
-        if (_panelMode) HidePanel();
         await PasteService.PasteAsync(item, target);
         App.ViewModel.Touch(item);
     }
 
-    // ---------- 编辑（预览面板内就地编辑） ----------
+    // ---------- 编辑（预览区内就地编辑） ----------
 
     private ClipItem? _editingItem;
 
     private void RowAction_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is not ClipItem item) return;
-        // 面板形态下预览整列是折叠的，编辑框和图片都看不见；行内操作先切回完整窗口。
-        if (_panelMode) ShowAsWindow();
         SelectItem(item);
 
         if (item.Type == ClipType.Text)
@@ -654,7 +589,7 @@ public sealed partial class MainWindow : Window
             e.Handled = true;
             MoveSelection(e.Key == Windows.System.VirtualKey.Up ? -1 : 1);
             // 即使用户先用鼠标或 Tab 把焦点放进列表，移动后也交还给搜索框，
-            // 让面板里的选中项始终只显示统一的深色高亮，而不是额外叠一圈白色焦点框。
+            // 让选中项始终只显示统一的深色高亮，而不是额外叠一圈白色焦点框。
             SearchBox.Focus(FocusState.Keyboard);
         }
     }
@@ -686,16 +621,7 @@ public sealed partial class MainWindow : Window
     private async void PasteSelected()
     {
         if (ItemsList.SelectedItem is ClipItem item)
-            await PasteItemAsync(item); // 面板形态下 PasteItemAsync 会先隐藏面板，再走统一粘贴链路
-    }
-
-    private void RootGrid_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        if (e.Key == Windows.System.VirtualKey.Escape && _panelMode)
-        {
-            HidePanel();
-            e.Handled = true;
-        }
+            await PasteItemAsync(item);
     }
 
     // ---------- 标题栏按钮 ----------

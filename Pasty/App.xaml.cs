@@ -76,7 +76,7 @@ public partial class App : Application
         _retention = new RetentionService(DispatcherQueue.GetForCurrentThread());
 
         var tray = new TrayIconService(MessageWindow);
-        tray.OpenRequested += () => MainWindow.Current?.ShowAsWindow();
+        tray.OpenRequested += () => MainWindow.Current?.ShowMainWindow();
         tray.SettingsRequested += OpenSettingsWindow;
         tray.AboutRequested += OpenAboutWindow;
         tray.ExitRequested += Exit;
@@ -87,7 +87,7 @@ public partial class App : Application
         };
 
         Hotkeys.PasteTopRequested += () => _ = PasteFirstAsync();
-        Hotkeys.ShowPanelRequested += () => MainWindow.Current?.ShowAsPanel();
+        Hotkeys.OpenWindowRequested += () => MainWindow.Current?.ShowFromHotkey();
 
         // 前台窗口跟踪要在任何粘贴发生之前起来：双击条目、点“粘贴”按钮都靠它找目标
         ForegroundService.Start();
@@ -159,7 +159,6 @@ public partial class App : Application
             return;
         }
         var target = ForegroundService.ResolvePasteTarget();
-        MainWindow.Current?.HideIfPanel();
         // 只记录类型与长度，内容本身绝不落盘：用户复制的往往就是密码和令牌
         Trace.Log($"paste-first 条目={item.Type} 长度={(item.Type == ClipType.Text ? item.Text.Length : 0)}");
         await PasteService.PasteAsync(item, target);
