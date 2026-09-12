@@ -79,6 +79,17 @@ public sealed class HotkeyService : IDisposable
         RegistrationChanged?.Invoke();
     }
 
+    /// <summary>
+    /// 设置页录入组合键时暂时注销，否则旧的全局热键会先收到 WM_HOTKEY，
+    /// 用户按下当前组合或相近组合时，录入按钮反而拿不到完整键盘事件。
+    /// 结束录入后必须调用 <see cref="ReRegister"/> 恢复。
+    /// </summary>
+    public void SuspendRegistration()
+    {
+        Win32.UnregisterHotKey(_hwnd, IdShowPanel);
+        Win32.UnregisterHotKey(_hwnd, IdPasteTop);
+    }
+
     /// <summary>注册一个热键；失败时把可操作的说明追加到 errors。</summary>
     private void TryRegister(int id, uint mods, uint vk, string label, List<string> errors)
     {

@@ -11,8 +11,6 @@
   <data name="MainSearchBox.PlaceholderText" xml:space="preserve"><value>Search clipboard history…</value></data>
   <data name="MainSearchBox.AutomationProperties.Name" xml:space="preserve"><value>Search clipboard history</value></data>
   <data name="MainItemsList.AutomationProperties.Name" xml:space="preserve"><value>Clipboard history</value></data>
-  <data name="MainRowEdit.AutomationProperties.Name" xml:space="preserve"><value>Edit content</value></data>
-  <data name="MainRowEdit.ToolTipService.ToolTip" xml:space="preserve"><value>Edit content</value></data>
   <data name="MainRowPin.AutomationProperties.Name" xml:space="preserve"><value>Pin / unpin</value></data>
   <data name="MainRowPin.ToolTipService.ToolTip" xml:space="preserve"><value>Pin / unpin</value></data>
   <data name="MainRowDelete.AutomationProperties.Name" xml:space="preserve"><value>Delete</value></data>
@@ -53,11 +51,12 @@
   <data name="SettingsClearButton.Content" xml:space="preserve"><value>Clear all history</value></data>
   <data name="SettingsHotkeysSection.Text" xml:space="preserve"><value>Hotkeys</value></data>
   <data name="SettingsShowHotkeyTitle.Text" xml:space="preserve"><value>Open panel hotkey</value></data>
-  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>Open clipboard history from anywhere</value></data>
-  <data name="SettingsShowHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>Open panel hotkey</value></data>
+  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>Click the button, then press a new shortcut</value></data>
+  <data name="SettingsShowHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>Customize open panel hotkey</value></data>
   <data name="SettingsPasteHotkeyTitle.Text" xml:space="preserve"><value>Paste latest hotkey</value></data>
-  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>Paste the most recent item into the current window without opening the panel</value></data>
-  <data name="SettingsPasteHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>Paste latest hotkey</value></data>
+  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>Click the button, then press a new shortcut</value></data>
+  <data name="SettingsPasteHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>Customize paste latest hotkey</value></data>
+  <data name="SettingsResetHotkeysButton.Content" xml:space="preserve"><value>Restore default hotkeys</value></data>
   <data name="SettingsOverrideTitle.Text" xml:space="preserve"><value>Override system Ctrl+V</value></data>
   <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>Ctrl+V pastes the latest history item; use the panel to select another item</value></data>
   <data name="SettingsOverrideToggle.AutomationProperties.Name" xml:space="preserve"><value>Override system Ctrl+V</value></data>

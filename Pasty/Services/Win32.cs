@@ -290,6 +290,7 @@ internal static class Win32
     public static extern uint RegisterClipboardFormatW(string lpszFormat);
 
     public const uint CF_DIB = 8;
+    public const uint CF_DIBV5 = 17;
     /// <summary>文件列表（资源管理器复制/剪切文件、复制视频音频时用的格式）。</summary>
     public const uint CF_HDROP = 15;
     public const uint GMEM_MOVEABLE = 0x0002;
@@ -321,6 +322,46 @@ internal static class Win32
 
     [DllImport("kernel32.dll")]
     public static extern IntPtr GlobalFree(IntPtr hMem);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern UIntPtr GlobalSize(IntPtr hMem);
+
+    /// <summary>
+    /// 复制剪贴板全局内存格式的数据。截图工具常只提供原生 PNG / CF_DIBV5，
+    /// WinRT DataPackage 不一定会把它们映射成 StandardDataFormats.Bitmap。
+    /// 格式存在却暂时读不到时抛异常，让上层沿用剪贴板占用重试，而不是静默丢掉截图。
+    /// </summary>
+    public static byte[]? ReadClipboardBytes(uint format)
+    {
+        if (!IsClipboardFormatAvailable(format)) return null;
+        if (!OpenClipboard(IntPtr.Zero))
+            throw new ExternalException("无法打开剪贴板", Marshal.GetLastWin32Error());
+        try
+        {
+            var handle = GetClipboardData(format);
+            if (handle == IntPtr.Zero)
+                throw new ExternalException("无法读取剪贴板数据", Marshal.GetLastWin32Error());
+            var size = GlobalSize(handle).ToUInt64();
+            if (size == 0 || size > int.MaxValue) return null;
+            var pointer = GlobalLock(handle);
+            if (pointer == IntPtr.Zero)
+                throw new ExternalException("无法锁定剪贴板数据", Marshal.GetLastWin32Error());
+            try
+            {
+                var bytes = new byte[(int)size];
+                Marshal.Copy(pointer, bytes, 0, bytes.Length);
+                return bytes;
+            }
+            finally
+            {
+                GlobalUnlock(handle);
+            }
+        }
+        finally
+        {
+            CloseClipboard();
+        }
+    }
 
     /// <summary>把字节数组以指定剪贴板格式写入（需在 OpenClipboard 之后调用）。失败返回 false。</summary>
     public static bool SetClipboardBytes(uint format, byte[] data)

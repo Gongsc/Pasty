@@ -47,6 +47,10 @@ public class ClipItem
 
     [JsonIgnore] public string KindLabel => Kind.Label();
     [JsonIgnore] public string TypeGlyph => Kind.Glyph();
+    [JsonIgnore] public string RowActionLabel => Type == ClipType.Image
+        ? Localization.Get("ViewContent")
+        : Localization.Get("EditContent");
+    [JsonIgnore] public string RowActionGlyph => Type == ClipType.Image ? "\uE890" : "\uE70F"; // 查看 / 编辑
 
     [JsonIgnore] public string SourceText => string.IsNullOrWhiteSpace(Source) ? Localization.Get("Unknown") : Source;
     [JsonIgnore] public string SizeDetailText { get { Probe(); return _sizes.Length > 0 ? _sizes : "—"; } }

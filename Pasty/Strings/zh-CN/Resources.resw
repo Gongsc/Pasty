@@ -11,8 +11,6 @@
   <data name="MainSearchBox.PlaceholderText" xml:space="preserve"><value>搜索剪贴板历史…</value></data>
   <data name="MainSearchBox.AutomationProperties.Name" xml:space="preserve"><value>搜索剪贴板历史</value></data>
   <data name="MainItemsList.AutomationProperties.Name" xml:space="preserve"><value>剪贴板历史</value></data>
-  <data name="MainRowEdit.AutomationProperties.Name" xml:space="preserve"><value>编辑内容</value></data>
-  <data name="MainRowEdit.ToolTipService.ToolTip" xml:space="preserve"><value>编辑内容</value></data>
   <data name="MainRowPin.AutomationProperties.Name" xml:space="preserve"><value>置顶 / 取消置顶</value></data>
   <data name="MainRowPin.ToolTipService.ToolTip" xml:space="preserve"><value>置顶 / 取消置顶</value></data>
   <data name="MainRowDelete.AutomationProperties.Name" xml:space="preserve"><value>删除</value></data>
@@ -53,11 +51,12 @@
   <data name="SettingsClearButton.Content" xml:space="preserve"><value>清空全部历史</value></data>
   <data name="SettingsHotkeysSection.Text" xml:space="preserve"><value>快捷键</value></data>
   <data name="SettingsShowHotkeyTitle.Text" xml:space="preserve"><value>唤出面板快捷键</value></data>
-  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>随时唤出剪贴板历史面板</value></data>
-  <data name="SettingsShowHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>唤出面板快捷键</value></data>
+  <data name="SettingsShowHotkeyDescription.Text" xml:space="preserve"><value>点击右侧按钮，然后按下新的组合键</value></data>
+  <data name="SettingsShowHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>自定义唤出面板快捷键</value></data>
   <data name="SettingsPasteHotkeyTitle.Text" xml:space="preserve"><value>粘贴第一条快捷键</value></data>
-  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>无需打开面板，直接把最近一条粘贴到当前窗口</value></data>
-  <data name="SettingsPasteHotkeyCombo.AutomationProperties.Name" xml:space="preserve"><value>粘贴第一条快捷键</value></data>
+  <data name="SettingsPasteHotkeyDescription.Text" xml:space="preserve"><value>点击右侧按钮，然后按下新的组合键</value></data>
+  <data name="SettingsPasteHotkeyButton.AutomationProperties.Name" xml:space="preserve"><value>自定义粘贴第一条快捷键</value></data>
+  <data name="SettingsResetHotkeysButton.Content" xml:space="preserve"><value>恢复默认快捷键</value></data>
   <data name="SettingsOverrideTitle.Text" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>
   <data name="SettingsOverrideDescription.Text" xml:space="preserve"><value>开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴</value></data>
   <data name="SettingsOverrideToggle.AutomationProperties.Name" xml:space="preserve"><value>覆盖系统 Ctrl+V</value></data>

@@ -255,6 +255,10 @@ public sealed partial class MainWindow : Window
     public static Visibility DeadTextVisibility(PasteReadiness readiness)
         => readiness == PasteReadiness.Unavailable ? Visibility.Visible : Visibility.Collapsed;
 
+    /// <summary>文字可以编辑，图片可以查看；文件没有对应的行内内容操作。</summary>
+    public static Visibility RowActionVisibility(ClipType type)
+        => type is ClipType.Text or ClipType.Image ? Visibility.Visible : Visibility.Collapsed;
+
     /// <summary>
     /// 按内容类型取图标画笔。颜色表在 ContentKindInfo.Color，亮/深各一档，
     /// 取哪一档看的是**本窗口**的 RootGrid.ActualTheme。不能走 Application.Current.Resources
@@ -551,13 +555,17 @@ public sealed partial class MainWindow : Window
 
     private ClipItem? _editingItem;
 
-    private void EditItem_Click(object sender, RoutedEventArgs e)
+    private void RowAction_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as FrameworkElement)?.Tag is not ClipItem item || item.Type != ClipType.Text) return;
-        // 面板形态下预览整列是折叠的，编辑框在里面根本看不见，
-        // 原先点了这个按钮就像什么都没发生；先切回窗口形态再进编辑态
+        if ((sender as FrameworkElement)?.Tag is not ClipItem item) return;
+        // 面板形态下预览整列是折叠的，编辑框和图片都看不见；行内操作先切回完整窗口。
         if (_panelMode) ShowAsWindow();
-        StartEdit(item);
+        SelectItem(item);
+
+        if (item.Type == ClipType.Text)
+            StartEdit(item);
+        else if (item.Type == ClipType.Image)
+            UpdatePreview(item);
     }
 
     private void EditPreview_Click(object sender, RoutedEventArgs e)

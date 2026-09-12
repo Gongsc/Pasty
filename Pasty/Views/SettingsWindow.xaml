@@ -87,8 +87,10 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock x:Uid="SettingsShowHotkeyTitle" Text="唤出面板快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsShowHotkeyDescription" Text="随时唤出剪贴板历史面板" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            <ComboBox x:Name="ShowHotkeyCombo" x:Uid="SettingsShowHotkeyCombo" AutomationProperties.Name="唤出面板快捷键" SelectionChanged="ShowHotkey_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" />
+                            <TextBlock x:Uid="SettingsShowHotkeyDescription" Text="点击右侧按钮，然后按下新的组合键" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <Button x:Name="ShowHotkeyButton" x:Uid="SettingsShowHotkeyButton" Content="Ctrl + Shift + V"
+                                    Click="HotkeyButton_Click" PreviewKeyDown="HotkeyButton_PreviewKeyDown" LostFocus="HotkeyButton_LostFocus"
+                                    Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
@@ -100,8 +102,10 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock x:Uid="SettingsPasteHotkeyTitle" Text="粘贴第一条快捷键" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
-                            <TextBlock x:Uid="SettingsPasteHotkeyDescription" Text="无需打开面板，直接把最近一条粘贴到当前窗口" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
-                            <ComboBox x:Name="PasteHotkeyCombo" x:Uid="SettingsPasteHotkeyCombo" AutomationProperties.Name="粘贴第一条快捷键" SelectionChanged="PasteHotkey_Changed" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" />
+                            <TextBlock x:Uid="SettingsPasteHotkeyDescription" Text="点击右侧按钮，然后按下新的组合键" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <Button x:Name="PasteHotkeyButton" x:Uid="SettingsPasteHotkeyButton" Content="Ctrl + Alt + V"
+                                    Click="HotkeyButton_Click" PreviewKeyDown="HotkeyButton_PreviewKeyDown" LostFocus="HotkeyButton_LostFocus"
+                                    Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
                         </Grid>
                         <Grid Padding="0,6" ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
@@ -116,8 +120,11 @@
                             <TextBlock x:Uid="SettingsOverrideDescription" Text="开启后按下 Ctrl+V 将粘贴历史第一条；可在面板中选择其他条目后再正常粘贴" Grid.Row="1" FontSize="11.5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
                             <ToggleSwitch x:Name="OverrideToggle" x:Uid="SettingsOverrideToggle" AutomationProperties.Name="覆盖系统 Ctrl+V" Toggled="Override_Toggled" Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Right" OnContent="" OffContent="" />
                         </Grid>
+                        <InfoBar x:Name="HotkeyCaptureInfo" Severity="Informational" IsOpen="False" IsClosable="False" Margin="0,6,0,0" />
                         <InfoBar x:Name="HotkeyWarning" x:Uid="SettingsHotkeyWarning" Severity="Warning" IsOpen="False" IsClosable="False"
                                  Title="快捷键未生效" Margin="0,6,0,4" />
+                        <Button x:Name="ResetHotkeysButton" x:Uid="SettingsResetHotkeysButton" Content="恢复默认快捷键"
+                                Click="ResetHotkeys_Click" HorizontalAlignment="Right" Margin="0,6,0,4" />
                     </StackPanel>
                 </Border>
 

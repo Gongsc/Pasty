@@ -11,6 +11,9 @@ namespace Pasty.Services;
 /// <summary>监听系统剪贴板变化，产出 ClipItem（文本/图片/文件）。</summary>
 public sealed class ClipboardMonitor
 {
+    private static readonly uint PngFormat = Win32.RegisterClipboardFormatW("PNG");
+    private static readonly uint MimePngFormat = Win32.RegisterClipboardFormatW("image/png");
+
     public event Action<ClipItem>? ClipboardChanged;
 
     /// <summary>自身粘贴/写剪贴板期间挂起监听，避免重复记录。</summary>
@@ -49,6 +52,9 @@ public sealed class ClipboardMonitor
 
     private async Task ReadClipboardAsync(IntPtr sourceWindow)
     {
+        // WM_CLIPBOARDUPDATE 与低级键盘钩子共用 UI 消息泵。先让消息处理函数返回，
+        // 避免复制较大的原生 DIB 时同步占住回调、触发系统静默摘掉键盘钩子。
+        await Task.Yield();
         var item = await ReadWithRetryAsync();
         if (item == null) return;
         item.Source = GetSource(sourceWindow);
@@ -114,6 +120,14 @@ public sealed class ClipboardMonitor
                 ? null
                 : new ClipItem { Type = ClipType.Text, Text = text };
         }
+
+        // Windows 截图工具常直接放入注册格式 PNG 或 CF_DIBV5；unpackaged WinUI 进程里，
+        // DataPackage 不一定把这些格式投影成 StandardDataFormats.Bitmap。先走原生格式，
+        // 再保留下面的 WinRT 路径兼容浏览器等提供 StorageItem 位图引用的应用。
+        var nativePng = await ReadNativeImageAsync();
+        if (nativePng != null)
+            return new ClipItem { Type = ClipType.Image, ImagePath = StorageService.SaveImage(nativePng) };
+
         if (content.Contains(StandardDataFormats.Bitmap))
         {
             var reference = await content.GetBitmapAsync();
@@ -132,6 +146,85 @@ public sealed class ClipboardMonitor
         return files.Count > 0
             ? new ClipItem { Type = ClipType.File, FilePaths = files }
             : null;
+    }
+
+    /// <summary>读取原生 PNG / DIB，并统一转换成磁盘所需的 PNG。</summary>
+    private static async Task<byte[]?> ReadNativeImageAsync()
+    {
+        foreach (var format in new[] { PngFormat, MimePngFormat })
+        {
+            var png = Win32.ReadClipboardBytes(format);
+            if (png is { Length: >= 8 } &&
+                png[0] == 0x89 && png[1] == 0x50 && png[2] == 0x4E && png[3] == 0x47 &&
+                png[4] == 0x0D && png[5] == 0x0A && png[6] == 0x1A && png[7] == 0x0A)
+                return png;
+        }
+
+        // 优先 V5：它能完整表达截图中的 alpha 与色彩空间；没有时再退回普通 CF_DIB。
+        var dib = Win32.ReadClipboardBytes(Win32.CF_DIBV5) ?? Win32.ReadClipboardBytes(Win32.CF_DIB);
+        if (dib == null) return null;
+        var bmp = WrapDibAsBmp(dib);
+        if (bmp == null) return null;
+
+        using var stream = new InMemoryRandomAccessStream();
+        using (var writer = new DataWriter(stream))
+        {
+            writer.WriteBytes(bmp);
+            await writer.StoreAsync();
+            writer.DetachStream();
+        }
+        stream.Seek(0);
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        return await EncodePngAsync(decoder);
+    }
+
+    /// <summary>
+    /// CF_DIB 没有普通 BMP 文件开头的 14 字节 BITMAPFILEHEADER；WIC 解码器需要它。
+    /// 这里根据 DIB 头、颜色表、位掩码与 V5 色彩配置算出像素偏移，再补一个文件头。
+    /// </summary>
+    private static byte[]? WrapDibAsBmp(byte[] dib)
+    {
+        if (dib.Length < 12) return null;
+        var headerSize = BitConverter.ToUInt32(dib, 0);
+        if (headerSize < 12 || headerSize > dib.Length) return null;
+
+        uint pixelOffset;
+        if (headerSize == 12) // BITMAPCOREHEADER
+        {
+            var bitCount = BitConverter.ToUInt16(dib, 10);
+            var colors = bitCount <= 8 ? 1u << bitCount : 0;
+            pixelOffset = headerSize + colors * 3;
+        }
+        else
+        {
+            if (headerSize < 40 || dib.Length < 40) return null;
+            var bitCount = BitConverter.ToUInt16(dib, 14);
+            var compression = BitConverter.ToUInt32(dib, 16);
+            var colorsUsed = BitConverter.ToUInt32(dib, 32);
+            var colors = colorsUsed != 0 ? colorsUsed : bitCount <= 8 ? 1u << bitCount : 0;
+            var masks = headerSize == 40
+                ? compression == 3 ? 12u : compression == 6 ? 16u : 0u
+                : 0u;
+            pixelOffset = headerSize + masks + colors * 4;
+
+            // V5 的内嵌 ICC 配置可能位于像素之前，不能把它误当像素数据。
+            if (headerSize >= 124 && dib.Length >= 120)
+            {
+                var profileOffset = BitConverter.ToUInt32(dib, 112);
+                var profileSize = BitConverter.ToUInt32(dib, 116);
+                if (profileOffset <= dib.Length && profileSize <= dib.Length - profileOffset)
+                    pixelOffset = Math.Max(pixelOffset, profileOffset + profileSize);
+            }
+        }
+
+        if (pixelOffset >= dib.Length || dib.Length > int.MaxValue - 14) return null;
+        var bmp = new byte[dib.Length + 14];
+        bmp[0] = (byte)'B';
+        bmp[1] = (byte)'M';
+        BitConverter.GetBytes((uint)bmp.Length).CopyTo(bmp, 2);
+        BitConverter.GetBytes(pixelOffset + 14).CopyTo(bmp, 10);
+        System.Buffer.BlockCopy(dib, 0, bmp, 14, dib.Length);
+        return bmp;
     }
 
     /// <summary>

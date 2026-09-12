@@ -134,5 +134,5 @@ dotnet run --project tools/IconGen -- Pasty/Assets
 - 界面文案、代码注释、提交信息全部中文。注释解释**为什么**（多数是某个已修 bug 的成因），改动相关代码时要么保持注释成立，要么一并更新——不要留下描述已不存在行为的注释。
 - **版本号只写 `Pasty.csproj` 的 `<Version>` 一处**，设置页底部读 `App.Version`（从程序集元数据来），CI 的产物名与 Release 标题从 csproj 读。发版同时打一个同名的 `v<版本号>` 标签，CI 会校验两者一致。
 - 界面语言只支持 `zh-CN` 与 `en-US`。XAML 静态文案放在 `Strings/<语言>/Resources.resw` 并通过 `x:Uid` 读取；代码动态文案统一走 `Services/Localization.cs`。语言设置写入 `settings.json`，下次启动时在任何窗口创建前设置 `PrimaryLanguageOverride`。
-- 热键可选组合是 `SettingsWindow.xaml.cs` 里硬编码的 `(名称, modifiers, vk)` 数组，设置里存的是裸的 modifier 位与虚拟键码；加组合改数组即可。
+- 两项全局热键由设置页直接录入，设置里存的是裸的 modifier 位与虚拟键码；至少要求 Ctrl、Alt 或 Win，避免单字母或仅 Shift 劫持正常输入。默认值统一定义在 `AppSettings`，设置页可一键恢复。
 - `PLAN.md` 是初始实施计划，`ui-mockup.html` / `ui-design.png` 是 UI 设计稿，均为历史参考，不随代码更新。

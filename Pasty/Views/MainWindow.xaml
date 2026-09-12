@@ -156,10 +156,11 @@
                                      整组按钮原先用 Opacity=0.7 压暗，高对比度主题下 Opacity 照样生效，
                                      会把系统保证的对比度打掉，所以改成按图标取次级前景色。 -->
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
-                                    <Button x:Name="EditButton" x:Uid="MainRowEdit" Click="EditItem_Click" Tag="{x:Bind}" Padding="5"
+                                    <Button x:Name="RowActionButton" Click="RowAction_Click" Tag="{x:Bind}" Padding="5"
                                             Background="Transparent" BorderThickness="0"
-                                            AutomationProperties.Name="编辑内容" ToolTipService.ToolTip="编辑内容">
-                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" FontSize="12"
+                                            Visibility="{x:Bind local:MainWindow.RowActionVisibility(Type)}"
+                                            AutomationProperties.Name="{x:Bind RowActionLabel}" ToolTipService.ToolTip="{x:Bind RowActionLabel}">
+                                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="{x:Bind RowActionGlyph}" FontSize="12"
                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                                     </Button>
                                     <Button x:Name="PinButton" x:Uid="MainRowPin" Click="PinItem_Click" Tag="{x:Bind}" Padding="5"
